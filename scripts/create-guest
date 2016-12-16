@@ -32,9 +32,9 @@ function usage() {
 where OPTIONS are
 
     -g <guest dir>     : Guest directory where machine will be located
-    -p <patchetst dir> : Patchtest local path repository. If not provided, a fresh clone is done
-    -o <meta-oe dir>   : (meta-)OpenEmbedded local path repository. If not provided, a fresh clone is done
-    -Y <poky dir>      : Poky local path repository. If not provided, a fresh clone is done
+    -p <patchetst dir> : Patchtest local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -o <meta-oe dir>   : (meta-)OpenEmbedded local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -Y <poky dir>      : Poky local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
 EOF
 >&2
 
@@ -113,7 +113,7 @@ BBLAYERS += "$PATCHTEST/meta-patchtest"
 EOF
 fi
 
-#bitbake core-image-patchtest
+bitbake core-image-patchtest
 
 # create crontab
 cp $PATCHTEST/scripts/cronenv $GUESTDIR/cronenv
