@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# fetch-mboxes: Fetch mboxes from a patchwork instance
+#
+# Copyright (C) 2016 Intel Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# defaults values
+GUESTDIR=''
+PATCHTEST=''
+METAOE=''
+POKY=''
+
+function usage() {
+    cat << EOF
+\$ $(basename $0) OPTIONS [SERIES]
+
+where OPTIONS are
+
+    -g <guest dir>     : Guest directory where machine will be located
+    -p <patchetst dir> : Patchtest local path repository. If not provided, a fresh clone is done
+    -o <meta-oe dir>   : (meta-)OpenEmbedded local path repository. If not provided, a fresh clone is done
+    -Y <poky dir>      : Poky local path repository. If not provided, a fresh clone is done
+EOF
+>&2
+
+    exit 1
+}
+
+while getopts ":g:p:o:Y:h" opt; do
+    case $opt in
+	g)
+	    GUESTDIR=$(readlink -e $OPTARG)
+	    ;;
+	p)
+	    PATCHTEST=$(readlink -e $OPTARG)
+	    ;;
+	o)
+	    METAOE=$(readlink -e $OPTARG)
+	    ;;
+	Y)
+	    POKY=$(readlink -e $OPTARG)
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG" >&2
+	    usage
+	    ;;
+	:)
+	    echo "Option -$OPTARG requires an argument." >&2
+	    usage
+	    ;;
+    esac
+done
+shift $((OPTIND-1))
+
+function clone() {
+    local REPOREMOTE=$1
+    local REPODIR=$2
+    if [ ! -d $REPODIR ]; then
+	git clone $REPOREMOTE $REPODIR
+    else
+	( cd $REPODIR;git pull )
+    fi
+}
+
+# main
+if [ -z "$GUESTDIR" ]; then
+    echo "Provide a guest directory, where guest will be build"
+    usage
+else
+    [ ! -d $GUESTDIR ]  && { mkdir $GUESTDIR; }
+fi
+
+[ -z "$PATCHTEST" ] && { PATCHTEST="$GUESTDIR/patchtest"; }
+[ -z "$METAOE" ]    && { METAOE="$GUESTDIR/meta-openembedded"; }
+[ -z "$POKY" ]      && { POKY="$GUESTDIR/poky"; }
+
+clone git://git.yoctoproject.org/patchtest $PATCHTEST
+clone git://git.openembedded.org/meta-openembedded $METAOE
+clone git://git.yoctoproject.org/poky $POKY
+
+cd $POKY
+. oe-init-build-env
+
+MACHINE="qemux86-64"
+cat >> $POKY/build/conf/local.conf << EOF
+MACHINE = "$MACHINE"
+PACKAGE_CLASSES = "package_ipk"
+IMAGE_FSTYPES = "ext4"
+SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/dev/PATH"
+SERIAL_CONSOLES_CHECK = "\${SERIAL_CONSOLES}"
+EOF
+
+if ! grep meta-patchtest -q $POKY/build/conf/bblayers.conf; then
+    cat >> $POKY/build/conf/bblayers.conf << EOF
+BBLAYERS += "$METAOE/meta-oe"
+BBLAYERS += "$METAOE/meta-python"
+BBLAYERS += "$PATCHTEST/meta-patchtest"
+EOF
+fi
+
+#bitbake core-image-patchtest
+
+# create crontab
+cp $PATCHTEST/scripts/cronenv $GUESTDIR/cronenv
+cat > "$GUESTDIR/crontab" <<EOF
+@hourly . $GUESTDIR/cronenv; $PATCHTEST/scripts/guest -Y "$POKY" -s "\$SHARE"  -u "\$PWURL" -p "\$PWPRO"  -U "\$PWUSER"  -P "\$PWPASS" >> $GUESTDIR/cronlog 2>&1
+EOF
+
+cat <<EOF
+You are now know ready to run patchtest:
+
+Manual:
+
+    SHAREFOLDER="<the folder to be share between host and guest>"
+    mkdir \$SHAREFOLDER; cd \$SHAREFOLDER
+    git clone git://git.yoctoproject.org/patchwork
+    git clone git://git.yoctoproject.org/patchtest
+    git clone git://git.yoctoproject.org/patchtest-oe
+    git clone git://git.openembedded.org/openembedded-core
+    git clone git://git.openembedded.org/bitbake openembedded-core/bitbake
+
+    # Place the mboxes to be tested under \$SHAREFOLDER/mboxes
+
+    cd $POKY; . oe-init-build-env
+    KERNEL="$POKY/build/tmp/deploy/images/$MACHINE/bzImage-$MACHINE.bin"
+    ROOTFS="$POKY/build/tmp/deploy/images/$MACHINE/core-image-patchtest-$MACHINE.ext4"
+    runqemu \$KERNEL \$ROOTFS qemuparams="-snapshot -fsdev local,id=test_dev,path=$SHAREFOLDER,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount" nographic kvm
+
+Crontab:
+
+    A Crontab file has been created at $GUESTDIR/crontab.
+    Set correct values at $GUESTDIR/cronenv and start it with:
+
+    crontab -u $USER $GUESTDIR/crontab
+
+EOF
