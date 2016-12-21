@@ -20,8 +20,7 @@ host; in the other hand, if automatic testing is intended, the guest method
 is strongly recommended. Both methods are fully explained in doc folder.
 
 Full documentation is located at the doc folder. Documentation is splitted into multiple
-adoc files and these can be parsed and converted into a single html document using asciidoc [4]
-on README.adoc file.
+files and these can be parsed and converted into a single html document using asciidoc [4].
 
 Contributing
 ------------
