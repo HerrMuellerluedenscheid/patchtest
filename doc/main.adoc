@@ -6,12 +6,11 @@
 . <<host, Host execution>>
 . <<guest, Guest execution>>
 . <<usage, Patchtest command line usage>>
-. <<pw, Patchwork Repository Configuration>>
+. <<pw, Patchwork Git configuration>>
 . <<scenarios, Secundary scripts and common scenarios>>
   .. <<fetching-mboxes, Fetching mboxes>>
   .. <<storing-results, Storing results>>
   .. <<assembling-mboxes, Assembling tested mboxes>>
-  .. <<cronjob, A cronjob for automatic testing>>
 
 include::intro.adoc[]
 include::host.adoc[]

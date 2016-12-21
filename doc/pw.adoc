@@ -1,37 +1,26 @@
 [[pw]]
-=== Patchwork and `git-pw`
+=== Patchwork Git configuration
 
-New series can be fetched from a 'patchwork' instance using the `git-pw` tool,
-but first a setup is needed on the target repository.
-For the 'OE-core' project case, set the following:
+New series can be fetched from a 'patchwork' instance using the patchwork `git-pw` tool. For the 'OE-core' project case,
+set the following:
+
+NOTE: The following commands assumes that 'patchwork/git-pw' and 'patchtest' folders are visible on '$PATH'
 
 [[pw-project-config]]
 [source,shell]
 ----
-cd $REPO
-PWURL='http://patchwork.openembedded.org'
-PWPROJECT='oe-core'
-git config patchwork.default.url $PWURL
-git config patchwork.default.project $PWPROJECT
+git clone git://git.openembedded.org/openembedded-core
+cd openembedded-core
+git config patchwork.default.url 'http://patchwork.openembedded.org'
+git config patchwork.default.project 'oe-core'
 ----
 
 Fetch and test in the same command line
 
 [source,shell]
 ----
-git pw mbox 1487 | patchtest - --start-dir $START
+git pw mbox 1487 | patchtest - --repo-dir $PWD --start-dir <patchtest-oe/tests>
 ----
 
-'Patchwork' can also post test results using `git-pw post-result`. If you want to use
-this mehtod, a credential setup is required.
 
-[[pw-user-config]]
-[source,shell]
-----
-git config patchwork.default.user <service account>
-git config patchwork.default.pass <service password>
-----
 
-Where service account is a dedicated patchwork account configured to be a maintainer for a specific patchwork
-project, in this case 'OpenEmbedded Core Layer'. See `git-pw` help for more info on how to post results from
-the command line.

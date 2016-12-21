@@ -7,18 +7,13 @@ secondary scripts, in the sense that these sit on top of `patchtest`,
 that can help you the process of fetching mboxes from patchwork instance and/or
 testing and collecting the results into repository.
 
+NOTE: The following commands assumes that 'patchwork/git-pw', 'patchtest' and 'patchtest/scripts' folders are visible on '$PATH'
+
 There are two main scripts
 
 * 'fetch-mboxes': Fetch mboxes from a patchwork instance and place these into a output folder
 * 'test-mboxes' : Test one or more mboxes, possible assembling these into into a git-branch and/or
                   storing results and logs into a target folder
-
-Before proceeding, examples assume the following environment variables are
-already defined (see sections<<env-vars, host>> for more information about these variables)
-
-* `REPO`      : Path to a patchwork configured repository and make sure the repo is (patchwork)
-configured as indicated on the <<pw-project-config, pw-config>> section.
-* `START`     : Starting directory of the test suite
 
 [[fetching-mboxes]]
 ==== Fetching mboxes
@@ -29,7 +24,11 @@ Fetching a particular series/revision:
 
 [source, shell]
 ----
-fetch-mboxes -r $REPO 2017.1
+git clone git://git.openembedded.org/openembedded-core
+cd openembedded-core
+git config patchwork.default.url http://patchwork.openembedded.org
+git config patchwork.default.project 'oe-core'
+fetch-mboxes -r <openembeded-core repo> 2017.1
 ----
 
 In the above command, if no revision is provided (no `.1`), it will take the latest revision.
@@ -38,20 +37,20 @@ Fetching mboxes since a timestamp (and stored into a specific folder)
 
 [source, shell]
 ----
-fetch-mboxes -r $REPO -m $HOME/mboxes -s 2016-08-31
+fetch-mboxes -r <openembedded-core repo> -m $PWD/mboxes -s 2016-08-31
 ----
 
 Or fetch latest mboxes since last git-pw poll
 
 [source, shell]
 ----
-fetch-mboxes -r $REPO -m $REPO/mboxes
+fetch-mboxes -r <openembedded-core repo> -m $PWD/mboxes
 ----
 
 This last command has a side-effect: it uses the `git-pw` tool to poll new events, so the later
 updates the timestamp file ('$REPO/git-pw.<project>.poll.timestmap'). As a result, this tool
 can be used to fetch new patches that have arrived to the mailing list through a cronjob as
-describe in the <<cronjob, cronjob>> section.
+describe in the <<guest, guest>> section.
 
 WARNING: if the 'git-pw.<project>.poll.timestamp' file is not represent, it will poll events but will
 not produce any mboxes. This avoids fetching many mboxes which may be not the desired behavior.
@@ -60,11 +59,13 @@ not produce any mboxes. This avoids fetching many mboxes which may be not the de
 ==== Storing results
 
 You may need to stored the results that the `patchtest` script yields. Let's say you have some
-mboxes in a particular folder ('mboxes') so you need to test them and store results into 'results'
+mboxes in a particular folder ('$PWD/mboxes') so you need to test them and store results into 'results'
 
 [source,shell]
 ----
-test-mboxes -r $REPO -s $START -o $HOME/results $HOME/mboxes
+git clone git://git.openembedded.org/openembedded-core
+git clone git://git.yoctoproject.org/patchtest-oe
+test-mboxes -r $PWD/openembedded-core -s $PWD/patchtest-oe/tests -o $PWD/results $PWD/mboxes
 ----
 
 The output directory 'results' contains raw patchtest results and logs.
@@ -77,7 +78,9 @@ that have pass **all** tests into a particular branch:
 
 [source,shell]
 ----
-test-mboxes -r $REPO -s $START -a patchtest-branch $HOME/mboxes
+git clone git://git.openembedded.org/openembedded-core
+git clone git://git.yoctoproject.org/patchtest-oe
+test-mboxes -r $PWD/openembeded-core -s $PWD/patchtest-oe/tests -a patchtest-branch $PWD/mboxes
 ----
 
 By default, the new branch created (`patchtest-branch` in this case) is checkout from `HEAD`, however one
@@ -85,43 +88,4 @@ can indicated another starting point with the parameter `-p`. If you want to mer
 the test results, just include the parameter `-A` (inside the new branch, you will see some commits with
 test failures). As in the `-o` case, the branch can be visited and commits review with standard
 `git-log/show` where results are stored as `git-notes`.
-
-[[cronjob]]
-==== A cronjob for automatic testing
-
-One way to monitor new patches coming into a patchwork instance is to run the script `pt-cronjob`
-periodically with a tool like `crontab`. Before running the cron, a Poky image must be created
-following the instructions from <<poky, guest>> then set the environment variable `POKY` pointing
-to the path to the poky folder. Image creation takes a lot of time, and this is the reason
-it is not created every time the cron starts. Once created, follow these steps:
-
-* Define a share folder (his folder is the one to be shared between host and guest)
-
-[source,shell]
-----
-SHARE="/home/<cronjob-user>/share"
-----
-
-* The script `pt-cronjob` uses the qemu runner to launch the guest machine, which in uses poky' scripts
-that needs `sudo` permissions so include the following lines using `visudo`
-
-[source,shell]
-----
-<cronjob-user> ALL=NOPASSWD: /home/<cronjob-user>/share/poky/scripts/runqemu-ifup
-<cronjob-user> ALL=NOPASSWD: /home/<cronjob-user>/share/poky/scripts/runqemu-ifdown
-----
-
-* Launch the script (this time, we will do it manually instead of using `crontab`)
-
-[source,shell]
-----
-pt-cronjob -Y $POKY -s $SHARE -U <PW user> -P <PW pass>
-----
-
-This script does several actions which can be divided in two phases: 1. fetch latest series, clone or pull relevant repositories
-then launch the `core-image-patchtest` guest machine 2. machine will run tests for every mbox then shutdown inmediately; at host, the
-results are converted to summaries and posted to the patchwork instance. Next time the cron executes, it will go through all
-the steps unless no new series are present. Of course, patchwork credentials should have POST permissions so request
-go though the instance which in turn will send emails to those configured (mailing list, specific developers, specific list, etc.) in case
-of failure.
 
