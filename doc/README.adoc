@@ -3,8 +3,8 @@
 === Table of Contents
 
 . <<intro, Introduction>>
-. <<host, Host Installation and Execution>>
-. <<guest, Host Installation and Guest execution>>
+. <<host, Host execution>>
+. <<guest, Guest execution>>
 . <<usage, Patchtest command line usage>>
 . <<pw, Patchwork Repository Configuration>>
 . <<scenarios, Secundary scripts and common scenarios>>

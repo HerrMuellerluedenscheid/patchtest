@@ -1,5 +1,5 @@
 [[host]]
-=== Host Installation and Execution
+=== Host execution
 [WARNING]
 Testing series coming from 'patchwork' without inspection may be risky on an insufficiently secured
 environment; if that is the case, it is [red]#strongly recommended# to execute patchtest in a guest machine
