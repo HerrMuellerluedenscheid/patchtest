@@ -1,20 +1,25 @@
 [[guest]]
 === Guest execution
 
-This method is recommended when patch testing is done automatically (i.e. through a 'cronjob'); however,
+This method is recommended when patch testing is done automatically (i.e. through a 'cronjob'). However,
 if you want to test your own patches, the <<host,host>> approach is a better option for making the code
 cycle faster ('code-test-code').
 
-NOTE: The code snipets shown below have been collected into 'scripts/create-guest' script
+NOTE: The following commands assumes that the 'patchtest/scripts' folder is visible on '$PATH'
 
-* Clon patchtest and run the script 'scripts/create-guest', specifying a parent directory
-where the guest machine will be located
+* Create the guest machine, specifying the directory where the guest machine will be located
 
 [source,shell]
 ----
-git://git.yoctoproject.org/patchtest
-GUEST=$HOME/patchtest-guest
-patchtest/scripts/create-guest -g $GUEST
+create-guest-machine -g $HOME/patchtest-guest
+----
+
+* Create the share folder, containing the repositories needed by 'patchtest' inside the guest machine
+
+
+[source,shell]
+----
+create-share-folder -s $HOME/patchtest-share
 ----
 
 * Once the machine is created, there are two ways to launch the machine: manually or through a
@@ -22,45 +27,34 @@ crontab:
 
 ==== Manual ====
 
+
+* Launch the guest machine through the 'guest' script
+
+NOTE: This script does several tasks: 1. fetch latest series 2. pull relevant
+repositories 3. launch the `core-image-patchtest` guest machine, the later
+tests every patch found on '$HOME/patchtest-share/mboxes' then halt automatically; at host, the
+results are located at '$HOME/patchtest-share/results'.
+
 [source,shell]
 ----
-SHARE="<the folder to be share between host and guest, containing all data needed by patchtest inside guest>"
-mkdir -p $SHARE
-cd $SHARE
-git clone git://git.yoctoproject.org/patchwork
-git clone git://git.yoctoproject.org/patchtest
-git clone git://git.yoctoproject.org/patchtest-oe
-git clone git://git.openembedded.org/openembedded-core
-git clone git://git.openembedded.org/bitbake openembedded-core/bitbake
-
-cd $SHARE/openembedded-core
-git config patchwork.default.url http://patchwork.openembedded.org
-git config patchwork.default.project oe-core
-
-rm -rf $GUEST/mboxes
-fetch-mboxes -r $SHARE/openembedded-core -m $GUEST/mboxes
-
-cd $GUEST/poky; . oe-init-build-env
-KERNEL="$GUEST/poky/build/tmp/deploy/images/qemux86-64/bzImage-qemux86-64.bin"
-ROOTFS="$GUEST/poky/build/tmp/deploy/images/qemux86-64/core-image-patchtest-qemux86-64.ext4"
-runqemu \$KERNEL \$ROOTFS qemuparams="-snapshot -fsdev local,id=test_dev,path=$SHARE,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount" nographic kvm
+guest -g $HOME/patchtest-guest -s $HOME/patchtest-share
 ----
 
-* Once launched, the virtual machine will automatically execute 'patchtest'
-
-* Results are stored at $SHARE/results
-
-All commands except cloning are required every time new series need to be tested.
+* The later command can be executed anytime, testing latest series since last
+time the command was executed. Consecutive 'guest' runs store the later data inside '$HOME/patchtest-share/backup' folder.
 
 ==== Crontab ====
 
-* Set the correct cron environment variables at '$GUEST/cronenv'; the later defined
-the share folder ('$SHARE') and patchwork parameters (url, project and user credentials)
+* Set the correct share directory at '$HOME/patchtest-guest/cronenv'
 
 NOTE: Network proxy env variables can also be included in this file.
 
-* The crontab uses the qemu runner to launch the guest machine, which in turn uses poky' scripts
-that needs `sudo` permissions so include the following lines using `visudo`
+[source,shell]
+----
+sed -i -e 's;SHAREDIR;$HOME/patchtest-share;' $HOME/patchtest-guest/cronenv
+----
+
+* Allow the cron user to run the following scripts with sudo permissions
 
 [source,shell]
 ----
@@ -72,17 +66,10 @@ that needs `sudo` permissions so include the following lines using `visudo`
 
 [source,shell]
 ----
-crontab -u $USER $GUESTDIR/crontab
+crontab -u $USER $HOME/patchtest-guest/crontab
 ----
 
-The cron will launch the 'scripts/guest' script every hour. The folder '$SHARE/mboxes' and '$SHARE/results'
-containg previous patchtest input/output data. Consecutive crons backup the later data inside the
-'$SHARE/backup' parent folder, so no data is lost.
-
-This guest script, run on behalf of the cron does several actions which can be divided in two phases: 1. fetch latest series, clone or pull relevant repositories
-then launch the `core-image-patchtest` guest machine 2. machine in turn will run tests for every mbox then shutdown inmediately; at host, the
-results are converted to summaries and posted to the patchwork instance. Next time the cron executes, it will go through all
-the steps unless no new series are present. Patchwork credentials should have POST permissions so request
-go though the instance which in turn will send emails to those configured (mailing list, specific developers, specific list, etc.) in case
-of failure.
+The cron will launch the 'scripts/guest' script every hour. The folders '$SHARE/mboxes' and '$SHARE/results'
+contain previous patchtest input/output data. Consecutive crons backup the later data inside the
+'$SHARE/backup' parent folder.
 
