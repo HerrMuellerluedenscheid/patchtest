@@ -2,14 +2,12 @@
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
-# pt-cronjob: fetch mboxes from patchwork at host and test them at
-#             guest machine (qemu); once guest turns off, the host
-#             post summary to the patchwork instance
+# guest: fetch mboxes from patchwork at host and test them at
+#        guest machine (qemu); once guest turns off, the host
+#        post summary to the patchwork instance
 #
-# WARNING: it is assume that the image defined on 'meta-patchtest' layer has
-#          already being created using Poky, thus the kernel and rootfs
-#          full paths are passed as arguments. For more information, check
-#          the documentation
+# NOTE: This is script assumes that the user has already run the
+#       create-share-folder and create-guest-machine scripts
 #
 # Copyright (C) 2016 Intel Corporation
 #
@@ -27,18 +25,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # Default values
-sharefolder=''
-
-pwurl='https://patchwork.openembedded.org'
-pwproject='oe-core'
-pwuser=''
-pwpass=''
-
-kernel='tmp/deploy/images/qemux86-64/bzImage-qemux86-64.bin'
-rootfs='tmp/deploy/images/qemux86-64/core-image-patchtest-qemux86-64.ext4'
-
-poky=''
-
+SHAREDIR=''
+GUESTDIR=''
+POST=''
 
 function usage() {
     cat << EOF
@@ -46,18 +35,9 @@ function usage() {
 
 where OPTIONS are
 
-    -s <sharefolder> : Share folder between host and guest. Default $sharefolder
-
-
-    -u <pwurl>       : Patchwork URL. Default $pwurl
-    -p <pwproject>   : Patchwork project. Default $pwproject
-    -U <pwuser>      : Patchwork user. Default $pwuser
-    -P <pwpass>      : Patchwork user pwd. $pwpass
-
-    -k <kernel>      : QEMU kernel image. Default $kernel
-    -r <rootfs>      : QEMU root filesystem. Default $rootfs
-
-    -Y <poky>        : Poky repo used to source oe-init-build-env. Default $poky
+    -s <share dir> : Share directory between host and guest
+    -g <guest dir> : Guest directory where machine will be located
+    -p             : Post results to the patchwork instance
 
 EOF
 >&2
@@ -65,31 +45,16 @@ EOF
     exit 1
 }
 
-while getopts ":s:u:p:U:P:k:r:Y:h" opt; do
+while getopts ":s:g:ph" opt; do
     case $opt in
 	s)
-	    sharefolder=$OPTARG
+	    SHAREDIR=$(readlink -e $OPTARG)
 	    ;;
-	u)
-	    pwurl=$OPTARG
+	g)
+	    GUESTDIR=$(readlink -e $OPTARG)
 	    ;;
 	p)
-	    pwproject=$OPTARG
-	    ;;
-	U)
-	    pwuser=$OPTARG
-	    ;;
-	P)
-	    pwpass=$OPTARG
-	    ;;
-	k)
-	    kernel=$OPTARG
-	    ;;
-	r)
-	    rootfs=$OPTARG
-	    ;;
-	Y)
-	    poky=$OPTARG
+	    POST='x'
 	    ;;
 	h)
 	    usage
@@ -105,86 +70,51 @@ while getopts ":s:u:p:U:P:k:r:Y:h" opt; do
     esac
 done
 
-function cloneorpull() {
-    local repo=$1
-    local path=$2
-
-    # if path exist, lets assume it is a git repo
-    # clean, move to master and pull, otherwise
-    # clone and pw configure
-    if [ -d $path/.git ]; then
-	(
-	    cd $path
-
-	    # "Clean" repository consists on the following
-	    #    1 abort possible merges
-	    #    2 reset working dir
-	    #    3 clean non-tracked files
-	    git am    --abort
-	    git reset --hard
-	    git clean -f -e ".git-pw*"
-
-	    # Start always from master
-	    git checkout master
-
-	    # pull latest changes
-	    git pull
-	)
-    else
-	git clone $repo $path
-    fi
-}
-
-function pwconfigure() {
+function pull() {
     local path=$1
-    local pwurl=$2
-    local pwproject=$3
-    local pwuser=$4
-    local pwpass=$5
-
     (
 	cd $path
-	git config patchwork.default.url $pwurl
-	git config patchwork.default.project $pwproject
-	test -n "$pwuser" && git config patchwork.default.user $pwuser
-	test -n "$pwpass" && git config patchwork.default.password $pwpass
+	git checkout master
+	git pull
+    )
+}
+
+function clean() {
+    local path=$1
+    (
+	cd $path
+	git am --abort
+	git reset --hard
+	git clean -f -e ".git-pw*"
     )
 }
 
 # Define repo location and names
-PW=$sharefolder/patchwork
-PT=$sharefolder/patchtest
-SUITE=$sharefolder/patchtest-oe
-REPO=$sharefolder/openembedded-core
-BB=$REPO/bitbake
+PW=$SHAREDIR/patchwork
+PT=$SHAREDIR/patchtest
+PTOE=$SHAREDIR/patchtest-oe
+OECORE=$SHAREDIR/openembedded-core
+BB=$OECORE/bitbake
+
+# make sure SHAREDIR folder is provided by user
+test -z "$SHAREDIR" && { echo "Provide a SHAREDIR folder"; usage; }
+
+# make sure the poky build folder exists
+test ! -d "$GUESTDIR/poky" && { echo "Please run create-guest-machine -g $GUESTDIR"; exit 1; }
+
+# Clone or pull share repos
+for repo in $PW $PT $PTOE $OECORE $BB; do
+    clean $repo && pull $repo
+done
 
 # include scripts into PATH
 export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
 
-# make sure sharefolder folder is provided by user
-test -z "$sharefolder" && { echo "Please provide a sharefolder folder"; usage; }
+# Get latest mboxes from the PW instance
+fetch-mboxes -r $OECORE -m $SHAREDIR/tmp/mboxes
 
-# make sure the poky build folder exists
-test ! -d "$poky" && { echo "Please build a qemu machine according to the guest documentation"; exit 1; }
-
-# create sharefolder
-test ! -d $sharefolder && mkdir $sharefolder
-
-# Clone or pull latest on required repos
-cloneorpull git://git.yoctoproject.org/patchwork $PW
-cloneorpull git://git.yoctoproject.org/patchtest $PT
-cloneorpull git://git.yoctoproject.org/patchtest-oe $SUITE
-cloneorpull git://git.openembedded.org/openembedded-core $REPO
-cloneorpull git://git.openembedded.org/bitbake $BB
-
-# Configure the repo to get latest mboxes
-pwconfigure $REPO $pwurl $pwproject $pwuser $pwpass
-
-# Get latest mboxes
-fetch-mboxes -r $REPO -m $sharefolder/tmp/mboxes
-
-# if new mboxes, just quit
-test ! -d $sharefolder/tmp/mboxes && { echo "Exiting"; exit 0; }
+# if now new mboxes, just quit
+test ! -d $SHAREDIR/tmp/mboxes && { echo "Exiting"; exit 0; }
 
 # Check if old mboxes are present and backup these and its results
 # TODO: we must thing on something smarter to store past results
@@ -193,39 +123,40 @@ test ! -d $sharefolder/tmp/mboxes && { echo "Exiting"; exit 0; }
 # and then use the post-summary script to get data from it.
 # A simpler approach is just storing plain texts and it is
 # the scripting does at the moment.
-if [ -d $sharefolder/mboxes ]; then
+if [ -d $SHAREDIR/mboxes ]; then
 
     # Unique folder to store previous mboxes/results
-    now="$(date --iso-8601=seconds)"
+    now="$(date --iso-8601=minutes)"
 
     # Define and create unique backup dir
-    backup="$sharefolder/backup/$now"
+    backup="$SHAREDIR/backup/$now"
     test ! -d $backup && mkdir -p $backup
 
     # backup mboxes
-    mv $sharefolder/mboxes $backup/mboxes
+    mv $SHAREDIR/mboxes $backup/mboxes
 
     # backup results (if exists)
-    test -d $sharefolder/results && mv $sharefolder/results $backup/results
+    test -d $SHAREDIR/results && mv $SHAREDIR/results $backup/results
 fi
 
 # Move latest mboxes
-mv $sharefolder/tmp/mboxes $sharefolder/mboxes
+mv $SHAREDIR/tmp/mboxes $SHAREDIR/mboxes
 
 # launch qemu. Machine is assumed to be in the default build folder (build)
 (
-    cd $poky
-    if . $poky/oe-init-build-env build; then
-	runqemu $kernel $rootfs	nographic kvm \
+    cd $GUERSTDIR/$poky
+    if . oe-init-build-env; then
+	runqemu qemux86-64 core-image-patchtest \
+		nographic kvm \
 		qemuparams="-snapshot \
-                            -fsdev local,id=test_dev,path=$sharefolder,security_model=mapped \
+                            -fsdev local,id=test_dev,path=$SHAREDIR,security_model=mapped \
                             -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount"
     else
 	echo 'oe-init-build-env could not be sourced'
     fi
 )
 
-# Post patchtest results ($sharefolder/results) into patchwork
-if [ -n "$pwuser" -a -n "$pwpass" ]; then
-    post-summary -r $REPO -R $sharefolder/results
+# Post patchtest results ($SHAREDIR/results) into patchwork
+if [ -n "$POST" ]; then
+    post-summary -r $OECORE -R $SHAREDIR/results
 fi

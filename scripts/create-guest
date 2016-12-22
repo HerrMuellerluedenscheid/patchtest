@@ -2,7 +2,7 @@
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
-# fetch-mboxes: Fetch mboxes from a patchwork instance
+# create-guest: Creates a (qemu) guest machine ready to test patches.
 #
 # Copyright (C) 2016 Intel Corporation
 #
@@ -18,6 +18,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Usage: Once created, the expected runqemu command is
+#
+#     runqemu <full path to bzImage-qemux86-64.bin> \
+#             <full path to core-image-patchtest-qemux86-64.ext4> \
+#             nographic kvm \
+#             qemuparams="-snapshot -fsdev local,id=test_dev,path=<share folder>,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount"
+#
+#     where <share folder is the one created with the create-share script
 
 # defaults values
 GUESTDIR=''
@@ -118,34 +127,6 @@ bitbake core-image-patchtest
 # create crontab
 cp $PATCHTEST/scripts/cronenv $GUESTDIR/cronenv
 cat > "$GUESTDIR/crontab" <<EOF
-@hourly . $GUESTDIR/cronenv; $PATCHTEST/scripts/guest -Y "$POKY" -s "\$SHARE"  -u "\$PWURL" -p "\$PWPRO"  -U "\$PWUSER"  -P "\$PWPASS" >> $GUESTDIR/cronlog 2>&1
+@hourly . $GUESTDIR/cronenv; $PATCHTEST/scripts/guest -g "$GUESTDIR" -s "SHAREDIR" >> $GUESTDIR/cronlog 2>&1
 EOF
 
-cat <<EOF
-You are now know ready to run patchtest:
-
-Manual:
-
-    SHAREFOLDER="<the folder to be share between host and guest>"
-    mkdir \$SHAREFOLDER; cd \$SHAREFOLDER
-    git clone git://git.yoctoproject.org/patchwork
-    git clone git://git.yoctoproject.org/patchtest
-    git clone git://git.yoctoproject.org/patchtest-oe
-    git clone git://git.openembedded.org/openembedded-core
-    git clone git://git.openembedded.org/bitbake openembedded-core/bitbake
-
-    # Place the mboxes to be tested under \$SHAREFOLDER/mboxes
-
-    cd $POKY; . oe-init-build-env
-    KERNEL="$POKY/build/tmp/deploy/images/$MACHINE/bzImage-$MACHINE.bin"
-    ROOTFS="$POKY/build/tmp/deploy/images/$MACHINE/core-image-patchtest-$MACHINE.ext4"
-    runqemu \$KERNEL \$ROOTFS qemuparams="-snapshot -fsdev local,id=test_dev,path=$SHAREFOLDER,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount" nographic kvm
-
-Crontab:
-
-    A Crontab file has been created at $GUESTDIR/crontab.
-    Set correct values at $GUESTDIR/cronenv and start it with:
-
-    crontab -u $USER $GUESTDIR/crontab
-
-EOF
