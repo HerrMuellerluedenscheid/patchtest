@@ -68,6 +68,7 @@ class PatchTestArgs(object):
 
         parser.add_argument('--repo-dir', '-r',
                             dest='repodir',
+                            type=os.path.abspath,
                             default=os.getcwd(),
                             help="Name of the repository where patch is merged")
 
@@ -79,6 +80,7 @@ class PatchTestArgs(object):
         startdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tests')
         parser.add_argument('--start-dir', '-s',
                             dest='startdir',
+                            type=os.path.abspath,
                             default=startdir,
                             help="Directory to start discover")
 
