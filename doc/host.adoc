@@ -5,57 +5,33 @@ Testing series coming from 'patchwork' without inspection may be risky on an ins
 environment; if that is the case, it is [red]#strongly recommended# to execute patchtest in a guest machine
 as indicated on the <<guest, guest>> section.
 
-[[env-vars]]
-* Define the following environment variables
 
-[source,shell]
-----
-BASE=$HOME/patchtest
-PW=$BASE/patchwork
-PT=$BASE/patchtest
-SUITE=$BASE/patchtest-oe
-START=$SUITE/tests
-REPO=$BASE/openembedded-core
------
-
-[[cloning]]
 * Clone repositories
-[NOTE]
-In case you already have the following repositories, make sure you update them before testing.
-The 'patchtest' and in this case, the suite, are live projects, and thus more checks are
-planned to be added, so keeping them up to date is important.
+
+NOTE: the following steps consider the 'OE-core' and its corresponding suite ('patchtest-oe')
+as examples. Any other project/suite can be configured in a similar fashion.
 
 [source,shell]
 ----
-mkdir $BASE
-git clone git://git.yoctoproject.org/patchwork $PW
-git clone git://git.yoctoproject.org/patchtest $PT
-git clone git://git.yoctoproject.org/patchtest-oe $SUITE
-git clone git://git.openembedded.org/openembedded-core $REPO
-----
-
-[[path]]
-* Append the following tool paths to the environment variable 'PATH'
-
-[source,shell]
-----
-export PATH="$PATH:$PW/git-pw/:$PT/scripts:$PT:"
+git clone git://git.yoctoproject.org/patchtest
+git clone git://git.yoctoproject.org/patchtest-oe
 ----
 
 [[requirements]]
-* Using 'pip', install the python requirements for `git-pw` and the test suite
+* Using 'pip', install the python requirements for both projects
 [NOTE]
 You can use your distribution package manager instead of 'pip' to install
 such python requirements
 
 [source,shell]
 ----
-cd $PW/git-pw; pip install -r requirements.txt
-cd $SUITE; pip install -r requirements.txt
+cd <path to patchtest>; pip install -r requirements.txt
+cd <path to patchtest-oe>; pip install -r requirements.txt
 ----
 
-The tool is ready to be used. It is worth mentioning that the above
-steps consider the 'OE-core' and its corresponding suite ('patchtest-oe')
-as examples. Any other project/suite can be configured in a similar fashion.
-Despite the upstream links being different, the rest of the instructions remain valid.
-For reference, some command line examples are shown under the <<usage, usage>> section.
+* Test a patch (patch can be those produdced by git-format-patch or an standard mbox)
+[source,shell]
+----
+patchtest <some patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+----
+
