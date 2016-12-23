@@ -53,16 +53,16 @@ EOF
 while getopts ":g:p:o:Y:h" opt; do
     case $opt in
 	g)
-	    GUESTDIR=$(readlink -e $OPTARG)
+	    GUESTDIR=$OPTARG
 	    ;;
 	p)
-	    PATCHTEST=$(readlink -e $OPTARG)
+	    PATCHTEST=$OPTARG
 	    ;;
 	o)
-	    METAOE=$(readlink -e $OPTARG)
+	    METAOE=$OPTARG
 	    ;;
 	Y)
-	    POKY=$(readlink -e $OPTARG)
+	    POKY=$OPTARG
 	    ;;
 	\?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -88,15 +88,22 @@ function clone() {
 
 # main
 if [ -z "$GUESTDIR" ]; then
-    echo "Provide a guest directory, where guest will be build"
+    echo "Provide a guest pathname, where guest machine will be constructed"
     usage
 else
     [ ! -d $GUESTDIR ]  && { mkdir $GUESTDIR; }
 fi
 
+GUESTDIR=$(readlink -e $GUESTDIR)
+
 [ -z "$PATCHTEST" ] && { PATCHTEST="$GUESTDIR/patchtest"; }
 [ -z "$METAOE" ]    && { METAOE="$GUESTDIR/meta-openembedded"; }
 [ -z "$POKY" ]      && { POKY="$GUESTDIR/poky"; }
+
+# in case folders exist, get canonical names
+[ -d "$PATCHTEST" ] && { PATCHTEST=$(readlink -e $PATCHTEST); }
+[ -d "$METAOE" ]    && { METAOE=$(readlink -e $METAOE); }
+[ -d "$POKY" ]      && { POKY=$(readlink -e $POKY); }
 
 clone git://git.yoctoproject.org/patchtest $PATCHTEST
 clone git://git.openembedded.org/meta-openembedded $METAOE
