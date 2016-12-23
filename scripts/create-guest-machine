@@ -28,6 +28,7 @@
 #
 #     where <share folder is the one created with the create-share script
 
+
 # defaults values
 GUESTDIR=''
 PATCHTEST=''
@@ -113,22 +114,33 @@ cd $POKY
 . oe-init-build-env
 
 MACHINE="qemux86-64"
+
+# remove previous patchtest config appends, if exist
+PTSMARK='#PATCHTEST START'
+PTEMARK='#PATCHTEST END'
+sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/local.conf
+sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
+
 cat >> $POKY/build/conf/local.conf << EOF
+$PTSMARK
 MACHINE = "$MACHINE"
 PACKAGE_CLASSES = "package_ipk"
 IMAGE_FSTYPES = "ext4"
 SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/dev/PATH"
 SERIAL_CONSOLES_CHECK = "\${SERIAL_CONSOLES}"
+$PTEMARK
 EOF
 
-if ! grep meta-patchtest -q $POKY/build/conf/bblayers.conf; then
-    cat >> $POKY/build/conf/bblayers.conf << EOF
+cat >> $POKY/build/conf/bblayers.conf << EOF
+$PTSMARK
 BBLAYERS += "$METAOE/meta-oe"
 BBLAYERS += "$METAOE/meta-python"
 BBLAYERS += "$PATCHTEST/meta-patchtest"
+$PTEMARK
 EOF
 fi
 
+# build image
 bitbake core-image-patchtest
 
 # create crontab
