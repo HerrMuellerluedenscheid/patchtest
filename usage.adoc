@@ -1,0 +1,290 @@
+== Patchtest
+
+=== Table of Contents
+
+. <<intro, Introduction>>
+. <<host, Host execution>>
+. <<guest, Guest execution>>
+. <<usage, Patchtest command line usage>>
+. <<pw, Patchwork Git configuration>>
+. <<scenarios, Secundary scripts and common scenarios>>
+  .. <<fetching-mboxes, Fetching mboxes>>
+  .. <<storing-results, Storing results>>
+  .. <<assembling-mboxes, Assembling tested mboxes>>
+
+[[intro]]
+=== Introduction
+
+**Patchtest** is a test framework for community patches based on the standard
+https://docs.python.org/2/library/unittest.html[unittest] python module.
+As input, it needs tree elements to work propertly: a **patch** in mbox format
+(either created with `git format-patch` or fetched from 'patchwork'),
+a **test suite** and a **target repository**. In this document we use 'patchtest-oe',
+a test suite containing checks targeted for the
+https://www.yoctoproject.org/tools-resources/community/mailing-lists[openembedded-core] (
+OE-Core, hereafter) mailing list corresponding to the
+http://git.openembedded.org/openembedded-core/[OE-Core] target repository.
+
+Patchtest can either run on a <<host,host>> or a <<guest,guest>> machine, depending on which environment
+the execution needs to be done. If you plan to test your own patches (a good practice before
+these are sent to the mailing list), the easiest way is to install and execute on your local
+host; in the other hand, if automatic testing is intended, the guest method
+is strongly recommended. Both methods are explained in the following sections.
+
+[[host]]
+=== Host execution
+[WARNING]
+Testing series coming from 'patchwork' without inspection may be risky on an insufficiently secured
+environment; if that is the case, it is [red]#strongly recommended# to execute patchtest in a guest machine
+as indicated on the <<guest, guest>> section.
+
+
+* Clone repositories
+
+NOTE: the following steps consider the 'OE-core' and its corresponding suite ('patchtest-oe')
+as examples. Any other project/suite can be configured in a similar fashion.
+
+[source,shell]
+----
+git clone git://git.yoctoproject.org/patchtest
+git clone git://git.yoctoproject.org/patchtest-oe
+----
+
+[[requirements]]
+* Using 'pip', install the python requirements for both projects
+[NOTE]
+You can use your distribution package manager instead of 'pip' to install
+such python requirements
+
+[source,shell]
+----
+cd <path to patchtest>; pip install -r requirements.txt
+cd <path to patchtest-oe>; pip install -r requirements.txt
+----
+
+* Test a patch (patch can be those produdced by git-format-patch or an standard mbox)
+[source,shell]
+----
+patchtest <some patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+----
+
+[[guest]]
+=== Guest execution
+
+This method is recommended when patch testing is done automatically (i.e. through a 'cronjob'). However,
+if you want to test your own patches, the <<host,host>> approach is a better option for making the code
+cycle faster ('code-test-code').
+
+NOTE: The following commands assumes that the 'patchtest/scripts' folder is visible on '$PATH'
+
+* Create the guest machine, specifying the directory where the guest machine will be located
+
+[source,shell]
+----
+create-guest-machine -g $HOME/patchtest-guest
+----
+
+* Create the share folder, containing the repositories needed by 'patchtest' inside the guest machine
+
+
+[source,shell]
+----
+create-share-folder -s $HOME/patchtest-share
+----
+
+* Once the machine is created, there are two ways to launch the machine: manually or through a
+crontab:
+
+==== Manual ====
+
+
+* Launch the guest machine through the 'guest' script
+
+NOTE: This script does several tasks: 1. fetch latest series 2. pull relevant
+repositories 3. launch the `core-image-patchtest` guest machine, the later
+tests every patch found on '$HOME/patchtest-share/mboxes' then halt automatically; at host, the
+results are located at '$HOME/patchtest-share/results'.
+
+[source,shell]
+----
+guest -g $HOME/patchtest-guest -s $HOME/patchtest-share
+----
+
+* The later command can be executed anytime, testing latest series since last
+time the command was executed. Consecutive 'guest' runs store the later data inside '$HOME/patchtest-share/backup' folder.
+
+==== Crontab ====
+
+* Set the correct share directory at '$HOME/patchtest-guest/cronenv'
+
+NOTE: Network proxy env variables can also be included in this file.
+
+[source,shell]
+----
+sed -i -e 's;SHAREDIR;$HOME/patchtest-share;' $HOME/patchtest-guest/cronenv
+----
+
+* Allow the cron user to run the following scripts with sudo permissions
+
+[source,shell]
+----
+<cronjob-user> ALL=NOPASSWD: /home/<cron user>/patchtest-guest/poky/scripts/runqemu-ifup
+<cronjob-user> ALL=NOPASSWD: /home/<cron user>/poky/scripts/runqemu-ifdown
+----
+
+* Set the crontab file
+
+[source,shell]
+----
+crontab -u $USER $HOME/patchtest-guest/crontab
+----
+
+The cron will launch the 'scripts/guest' script every hour. The folders '$SHARE/mboxes' and '$SHARE/results'
+contain previous patchtest input/output data. Consecutive crons backup the later data inside the
+'$SHARE/backup' parent folder.
+
+[[usage]]
+=== Usage
+
+When testing patches locally you can manually run the tool on your local
+host. 'Patchtest' only accepts a **single** patch (mbox) either from stdin
+
+NOTE: The following commands assumes that 'patchtest' folder is visible on '$PATH'
+
+[source,shell]
+----
+git clone git://git.openembedded.org/openembedded-core
+git clone git://git.openembedded.org/bitbake openembedded-core/bitbake
+git clone git://git.yoctoproject.org/patchtest-oe
+cd openembedded-core
+git format-patch -1 --stdout | patchtest - --repo-dir $PWD --start-dir <path to /pachtest-oe/tests>
+----
+
+or as parameter
+
+[source,shell]
+----
+cd openembedded-core
+git format-patch -1
+patchtest <new created patch> --repo-dir $PWD --start-dir <path to /pachtest-oe/tests>
+----
+
+You can see the test results on the console (passes, fails and skips tests). There are others parameters
+you can include, see `patchtest -h` for more help.
+[[pw]]
+=== Patchwork Git configuration
+
+New series can be fetched from a 'patchwork' instance using the patchwork `git-pw` tool. For the 'OE-core' project case,
+set the following:
+
+NOTE: The following commands assumes that 'patchwork/git-pw' and 'patchtest' folders are visible on '$PATH'
+
+[[pw-project-config]]
+[source,shell]
+----
+git clone git://git.openembedded.org/openembedded-core
+cd openembedded-core
+git config patchwork.default.url 'http://patchwork.openembedded.org'
+git config patchwork.default.project 'oe-core'
+----
+
+Fetch and test in the same command line
+
+[source,shell]
+----
+git pw mbox 1487 | patchtest - --repo-dir $PWD --start-dir <patchtest-oe/tests>
+----
+
+
+
+[[scenarios]]
+=== Secundary scripts and common scenarios
+
+The script `patchtest` is the only script you would use in case you are testing a single
+mbox and you do not really care about storing the results. These section cover others scripts,
+secondary scripts, in the sense that these sit on top of `patchtest`,
+that can help you the process of fetching mboxes from patchwork instance and/or
+testing and collecting the results into repository.
+
+NOTE: The following commands assumes that 'patchwork/git-pw', 'patchtest' and 'patchtest/scripts' folders are visible on '$PATH'
+
+There are two main scripts
+
+* 'fetch-mboxes': Fetch mboxes from a patchwork instance and place these into a output folder
+* 'test-mboxes' : Test one or more mboxes, possible assembling these into into a git-branch and/or
+                  storing results and logs into a target folder
+
+[[fetching-mboxes]]
+==== Fetching mboxes
+
+In case you want want to fetch one ore more mboxes from a patchwork instance, you can do it in several ways:
+
+Fetching a particular series/revision:
+
+[source, shell]
+----
+git clone git://git.openembedded.org/openembedded-core
+cd openembedded-core
+git config patchwork.default.url http://patchwork.openembedded.org
+git config patchwork.default.project 'oe-core'
+fetch-mboxes -r <openembeded-core repo> 2017.1
+----
+
+In the above command, if no revision is provided (no `.1`), it will take the latest revision.
+
+Fetching mboxes since a timestamp (and stored into a specific folder)
+
+[source, shell]
+----
+fetch-mboxes -r <openembedded-core repo> -m $PWD/mboxes -s 2016-08-31
+----
+
+Or fetch latest mboxes since last git-pw poll
+
+[source, shell]
+----
+fetch-mboxes -r <openembedded-core repo> -m $PWD/mboxes
+----
+
+This last command has a side-effect: it uses the `git-pw` tool to poll new events, so the later
+updates the timestamp file ('$REPO/git-pw.<project>.poll.timestmap'). As a result, this tool
+can be used to fetch new patches that have arrived to the mailing list through a cronjob as
+describe in the <<guest, guest>> section.
+
+WARNING: if the 'git-pw.<project>.poll.timestamp' file is not represent, it will poll events but will
+not produce any mboxes. This avoids fetching many mboxes which may be not the desired behavior.
+
+[[storing-results]]
+==== Storing results
+
+You may need to stored the results that the `patchtest` script yields. Let's say you have some
+mboxes in a particular folder ('$PWD/mboxes') so you need to test them and store results into 'results'
+
+[source,shell]
+----
+git clone git://git.openembedded.org/openembedded-core
+git clone git://git.yoctoproject.org/patchtest-oe
+test-mboxes -r $PWD/openembedded-core -s $PWD/patchtest-oe/tests -o $PWD/results $PWD/mboxes
+----
+
+The output directory 'results' contains raw patchtest results and logs.
+
+[[assembling-mboxes]]
+=== Assembling tested mboxes
+
+Besides <<storing-results,storing results>>, one may be interested in assembling those patches
+that have pass **all** tests into a particular branch:
+
+[source,shell]
+----
+git clone git://git.openembedded.org/openembedded-core
+git clone git://git.yoctoproject.org/patchtest-oe
+test-mboxes -r $PWD/openembeded-core -s $PWD/patchtest-oe/tests -a patchtest-branch $PWD/mboxes
+----
+
+By default, the new branch created (`patchtest-branch` in this case) is checkout from `HEAD`, however one
+can indicated another starting point with the parameter `-p`. If you want to merge the mboxes no matter
+the test results, just include the parameter `-A` (inside the new branch, you will see some commits with
+test failures). As in the `-o` case, the branch can be visited and commits review with standard
+`git-log/show` where results are stored as `git-notes`.
+

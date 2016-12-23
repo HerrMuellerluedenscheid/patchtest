@@ -19,8 +19,10 @@ these are sent to the mailing list), the easiest way is to install and execute o
 host; in the other hand, if automatic testing is intended, the guest method
 is strongly recommended. Both methods are fully explained in doc folder.
 
-Full documentation is located at the doc folder. Documentation is splitted into multiple
-files and these can be parsed and converted into a single html document using asciidoc [4].
+Installation and Usage
+----------------------
+
+Refer to the file 'usage.adoc' in this directory. 
 
 Contributing
 ------------
@@ -46,4 +48,3 @@ Links
 [1] http://git.yoctoproject.org/cgit/cgit.cgi/patchtest-oe/
 [2] https://www.yoctoproject.org/tools-resources/community/mailing-lists
 [3] http://git.openembedded.org/openembedded-core/
-[4] http://asciidoc.org/
