@@ -43,7 +43,7 @@ EOF
 while getopts ":s:u:p:U:P:h" opt; do
     case $opt in
 	s)
-	    SHAREDIR=$(readlink -e $OPTARG)
+	    SHAREDIR=$OPTARG
 	    ;;
 	u)
 	    PWURL=$OPTARG
@@ -81,11 +81,16 @@ function clone() {
 }
 
 # main
-if [ ! -d $SHAREDIR ]; then
-    mkdir -p $SHAREDIR
+if [ -z "$SHAREDIR" ]; then
+    echo "Provide a share pathname, where share data would be stored between host and guest"
+    usage
+else
+    [ ! -d $SHAREDIR ]  && { mkdir $SHAREDIR; }
 fi
 
-# clone repos
+SHAREDIR=$(readlink -e $SHAREDIR)
+
+# Clone or pull repos
 clone git://git.yoctoproject.org/patchwork $SHAREDIR/patchwork
 clone git://git.yoctoproject.org/patchtest $SHAREDIR/patchtest
 clone git://git.yoctoproject.org/patchtest-oe $SHAREDIR/patchtest-oe
@@ -93,7 +98,7 @@ clone git://git.openembedded.org/openembedded-core $SHAREDIR/openembedded-core
 clone git://git.openembedded.org/bitbake $SHAREDIR/openembedded-core/bitbake
 cd $SHAREDIR/openembedded-core
 
-# set git-pw configuration
+# Set git-pw configuration
 test -n "$PWURL" &&  git config patchwork.default.url $PWURL
 test -n "$PWPRO" &&  git config patchwork.default.project $PWPRO
 test -n "$PWUSER" && git config patchwork.default.user $PWUSER
