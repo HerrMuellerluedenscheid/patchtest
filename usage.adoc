@@ -63,6 +63,7 @@ cd <path to patchtest-oe>; pip install -r requirements.txt
 ----
 
 * Test a patch (patch can be those produdced by git-format-patch or an standard mbox)
+
 [source,shell]
 ----
 patchtest <some patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
@@ -115,13 +116,11 @@ time the command was executed. Consecutive 'guest' runs store the later data ins
 
 ==== Crontab ====
 
-* Set the correct share directory at '$HOME/patchtest-guest/cronenv'
-
-NOTE: Network proxy env variables can also be included in this file.
+* create the crontab file
 
 [source,shell]
 ----
-sed -i -e 's;SHAREDIR;$HOME/patchtest-share;' $HOME/patchtest-guest/cronenv
+create-crontab -g $HOME/patchtest-guest -s $HOME/patchtest-share -c $HOME/patchtest-cron
 ----
 
 * Allow the cron user to run the following scripts with sudo permissions
@@ -129,19 +128,22 @@ sed -i -e 's;SHAREDIR;$HOME/patchtest-share;' $HOME/patchtest-guest/cronenv
 [source,shell]
 ----
 <cronjob-user> ALL=NOPASSWD: /home/<cron user>/patchtest-guest/poky/scripts/runqemu-ifup
-<cronjob-user> ALL=NOPASSWD: /home/<cron user>/poky/scripts/runqemu-ifdown
+<cronjob-user> ALL=NOPASSWD: /home/<cron user>/patchtest-guest/poky/scripts/runqemu-ifdown
 ----
 
 * Set the crontab file
 
+NOTE: Cron executes (sources) the '$HOME/patchtest-cron/cronenv', so any environment variable to take
+into account on the cronjob process can be added here, i.e. proxies
+
 [source,shell]
 ----
-crontab -u $USER $HOME/patchtest-guest/crontab
+crontab -u $USER $HOME/patchtest-cron/crontab
 ----
 
-The cron will launch the 'scripts/guest' script every hour. The folders '$SHARE/mboxes' and '$SHARE/results'
-contain previous patchtest input/output data. Consecutive crons backup the later data inside the
-'$SHARE/backup' parent folder.
+By default, the cron runs every fifteen minutes but any other interval can be set using the parameter '-f'.
+The folders '$SHARE/mboxes' and '$SHARE/results' contain previous patchtest input/output data.
+Consecutive crons backup the later data inside the '$SHARE/backup' parent folder.
 
 [[usage]]
 === Usage

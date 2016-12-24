@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# create-crontab: creates a crontab file used to run patchtest inside guest
+#
+# Copyright (C) 2016 Intel Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+GUESTDIR=''
+SHAREDIR=''
+CRONDIR=$PWD
+FREQ='*/15 * * * *'
+
+function usage() {
+    cat << EOF
+\$ $(basename $0) OPTIONS [SERIES]
+
+where OPTIONS are
+
+    -g <guest dir>      : Guest directory
+    -s <share dir>      : Share directory
+    -c <cron dir>       : Cron directory to place the crontab. Default: '$CRONDIR'
+    -f <cron frequency> : Cron frequency: Default '$FREQ'
+
+EOF
+>&2
+
+    exit 1
+}
+
+while getopts ":g:s:c:f:h" opt; do
+    case $opt in
+	g)
+	    GUESTDIR=$OPTARG
+	    ;;
+	s)
+	    SHAREDIR=$OPTARG
+	    ;;
+	c)
+	    CRONDIR=$OPTARG
+	    ;;
+	f)
+	    FREQ="$OPTARG"
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG" >&2
+	    usage
+	    ;;
+	:)
+	    echo "Option -$OPTARG requires an argument." >&2
+	    usage
+	    ;;
+    esac
+done
+shift $((OPTIND-1))
+
+# must parameters
+test -z "$SHAREDIR" && { echo "Provide the share directory folder created with create-share-folder script"; usage; }
+test -z "$GUESTDIR" && { echo "Provide the guest directory folder created with create-guest-machine script"; usage; }
+
+# make sure the poky build folder exists
+test ! -d "$SHAREDIR" && { echo "Provide the share directory folder created with create-share-folder script"; usage; }
+test ! -d "$GUESTDIR" && { echo "Provide the guest directory folder created with create-guest-machine script"; usage; }
+
+# create crondir if necessary
+[ ! -d "$CRONDIR" ] && { mkdir -p $CRONDIR; }
+
+SHAREDIR="$(readlink -e $SHAREDIR)"
+GUESTDIR="$(readlink -e $GUESTDIR)"
+CRONDIR="$(readlink -e $CRONDIR)"
+
+# create crontab
+cat > $CRONDIR/cronenv << EOF
+#!/bin/sh
+#
+# Place any environment variables needed
+# before running 'guest' script
+#
+#unset  SSH_AUTH_SOCK
+#export GIT_PROXY_COMMAND=""
+#export ftp_proxy=""
+#export http_proxy=""
+#export https_proxy=""
+#export no_proxy=""
+EOF
+
+chmod +x $CRONDIR/cronenv
+
+cat > "$CRONDIR/crontab" <<EOF
+$FREQ . $CRONDIR/cronenv; $SHAREDIR/patchtest/scripts/guest -g "$GUESTDIR" -s "$SHAREDIR" >> $CRONDIR/cronlog 2>&1
+EOF

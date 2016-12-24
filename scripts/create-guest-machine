@@ -142,10 +142,3 @@ fi
 
 # build image
 bitbake core-image-patchtest
-
-# create crontab
-cp $PATCHTEST/scripts/cronenv $GUESTDIR/cronenv
-cat > "$GUESTDIR/crontab" <<EOF
-@hourly . $GUESTDIR/cronenv; $PATCHTEST/scripts/guest -g "$GUESTDIR" -s "SHAREDIR" >> $GUESTDIR/cronlog 2>&1
-EOF
-
