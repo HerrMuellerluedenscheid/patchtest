@@ -5,7 +5,6 @@
 . <<intro, Introduction>>
 . <<host, Host execution>>
 . <<guest, Guest execution>>
-. <<usage, Patchtest command line usage>>
 . <<pw, Patchwork Git configuration>>
 . <<scenarios, Secundary scripts and common scenarios>>
   .. <<fetching-mboxes, Fetching mboxes>>
@@ -62,11 +61,20 @@ cd <path to patchtest>; pip install -r requirements.txt
 cd <path to patchtest-oe>; pip install -r requirements.txt
 ----
 
-* Test a patch (patch can be those produdced by git-format-patch or an standard mbox)
+* Test a patch (patch can be those produdced by git-format-patch from the OE-core repository
+or an standard mbox fetched from patchwork)
 
 [source,shell]
 ----
-patchtest <some patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+patchtest <some OE-core patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+----
+
+or providing a patch through the standard input
+
+[source,shell]
+----
+cd <path to OE-core repository>
+git format-patch -1 --stdout | patchtest - --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
 ----
 
 [[guest]]
@@ -93,15 +101,9 @@ create-guest-machine -g $HOME/patchtest-guest
 create-share-folder -s $HOME/patchtest-share
 ----
 
-* Once the machine is created, there are two ways to launch the machine: manually or through a
-crontab:
-
-==== Manual ====
-
-
 * Launch the guest machine through the 'guest' script
 
-NOTE: This script does several tasks: 1. fetch latest series 2. pull relevant
+NOTE: The 'guest' script execute the follow tasks: 1. fetch latest series 2. pull relevant
 repositories 3. launch the `core-image-patchtest` guest machine, the later
 tests every patch found on '$HOME/patchtest-share/mboxes' then halt automatically; at host, the
 results are located at '$HOME/patchtest-share/results'.
@@ -112,12 +114,11 @@ guest -g $HOME/patchtest-guest -s $HOME/patchtest-share
 ----
 
 * The later command can be executed anytime, testing latest series since last
-time the command was executed. Consecutive 'guest' runs store the later data inside '$HOME/patchtest-share/backup' folder.
+time the command was executed. Consecutive 'guest' runs store the later data inside '$HOME/patchtest-share/backup'
+folder. Launching the guest machine can be done automatically through a cronjob and the following instructions
+provide the proper setup through the system 'crontab' command
 
-==== Crontab ====
-
-* create the crontab file
-
+* Create the crontab file
 [source,shell]
 ----
 create-crontab -g $HOME/patchtest-guest -s $HOME/patchtest-share -c $HOME/patchtest-cron
@@ -145,34 +146,6 @@ By default, the cron runs every fifteen minutes but any other interval can be se
 The folders '$SHARE/mboxes' and '$SHARE/results' contain previous patchtest input/output data.
 Consecutive crons backup the later data inside the '$SHARE/backup' parent folder.
 
-[[usage]]
-=== Usage
-
-When testing patches locally you can manually run the tool on your local
-host. 'Patchtest' only accepts a **single** patch (mbox) either from stdin
-
-NOTE: The following commands assumes that 'patchtest' folder is visible on '$PATH'
-
-[source,shell]
-----
-git clone git://git.openembedded.org/openembedded-core
-git clone git://git.openembedded.org/bitbake openembedded-core/bitbake
-git clone git://git.yoctoproject.org/patchtest-oe
-cd openembedded-core
-git format-patch -1 --stdout | patchtest - --repo-dir $PWD --start-dir <path to /pachtest-oe/tests>
-----
-
-or as parameter
-
-[source,shell]
-----
-cd openembedded-core
-git format-patch -1
-patchtest <new created patch> --repo-dir $PWD --start-dir <path to /pachtest-oe/tests>
-----
-
-You can see the test results on the console (passes, fails and skips tests). There are others parameters
-you can include, see `patchtest -h` for more help.
 [[pw]]
 === Patchwork Git configuration
 
@@ -196,8 +169,6 @@ Fetch and test in the same command line
 ----
 git pw mbox 1487 | patchtest - --repo-dir $PWD --start-dir <patchtest-oe/tests>
 ----
-
-
 
 [[scenarios]]
 === Secundary scripts and common scenarios
