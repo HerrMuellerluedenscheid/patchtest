@@ -23,6 +23,8 @@
 SHAREDIR=''
 PWURL='http://patchwork.openembedded.org'
 PWPRO='oe-core'
+PWUSER=''
+PWPASS=''
 
 function usage() {
     cat << EOF
@@ -30,9 +32,11 @@ function usage() {
 
 where OPTIONS are
 
-    -s <share dir> : Share directory
-    -u <pw url>:     Patchwork URL. Default $PWURL
-    -p <pw project>: Patchwork project name. Default $PWPRO
+    -s <share dir>   : Share directory
+    -u <pw url>      : Patchwork URL. Default '$PWURL'
+    -p <pw project>  : Patchwork project name. Default '$PWPRO'
+    -U <pw user>     : Patchwork username. Default '$PWUSER'
+    -P <pw password> : Patchwork username password. Default '$PWPASS'
 
 EOF
 >&2
