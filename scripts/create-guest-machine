@@ -138,7 +138,6 @@ BBLAYERS += "$METAOE/meta-python"
 BBLAYERS += "$PATCHTEST/meta-patchtest"
 $PTEMARK
 EOF
-fi
 
 # build image
 bitbake core-image-patchtest
