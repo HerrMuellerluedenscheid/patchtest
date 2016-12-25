@@ -28,12 +28,12 @@
 #
 #     where <share folder is the one created with the create-share script
 
-
 # defaults values
 GUESTDIR=''
 PATCHTEST=''
 METAOE=''
 POKY=''
+YPBRANCH='origin/master'
 
 function usage() {
     cat << EOF
@@ -41,17 +41,19 @@ function usage() {
 
 where OPTIONS are
 
-    -g <guest dir>     : Guest directory where machine will be located
-    -p <patchetst dir> : Patchtest local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
-    -o <meta-oe dir>   : (meta-)OpenEmbedded local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
-    -Y <poky dir>      : Poky local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -g <guest dir>      : Guest directory where machine will be located
+    -p <patchetest dir> : Patchtest local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -o <meta-oe dir>    : (meta-)OpenEmbedded local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -Y <poky dir>       : Poky local path repository. If not provided, a fresh clone is done from git.yoctoproject.org
+    -b <poky branch>    : Poky branch. Defaults '$YPBRANCH'
+
 EOF
 >&2
 
     exit 1
 }
 
-while getopts ":g:p:o:Y:h" opt; do
+while getopts ":g:p:o:Y:b:h" opt; do
     case $opt in
 	g)
 	    GUESTDIR=$OPTARG
@@ -64,6 +66,9 @@ while getopts ":g:p:o:Y:h" opt; do
 	    ;;
 	Y)
 	    POKY=$OPTARG
+	    ;;
+	b)
+	    YPBRANCH=$OPTARG
 	    ;;
 	\?)
 	    echo "Invalid option: -$OPTARG" >&2
@@ -80,11 +85,13 @@ shift $((OPTIND-1))
 function clone() {
     local REPOREMOTE=$1
     local REPODIR=$2
+    local BRANCH=$3
     if [ ! -d $REPODIR ]; then
 	git clone $REPOREMOTE $REPODIR
     else
-	( cd $REPODIR;git pull )
+	( cd $REPODIR;git fetch origin )
     fi
+    [ -n "$BRANCH" ] && { git checkout $BRANCH; }
 }
 
 # main
@@ -107,8 +114,8 @@ GUESTDIR=$(readlink -e $GUESTDIR)
 [ -d "$POKY" ]      && { POKY=$(readlink -e $POKY); }
 
 clone git://git.yoctoproject.org/patchtest $PATCHTEST
-clone git://git.openembedded.org/meta-openembedded $METAOE
-clone git://git.yoctoproject.org/poky $POKY
+clone git://git.openembedded.org/meta-openembedded $METAOE $YPBRANCH
+clone git://git.yoctoproject.org/poky $POKY $YPBRANCH
 
 cd $POKY
 . oe-init-build-env
