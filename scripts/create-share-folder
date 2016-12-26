@@ -21,7 +21,7 @@
 
 # defaults values
 SHAREDIR=''
-PWURL='http://patchwork.openembedded.org'
+PWURL='https://patchwork.openembedded.org'
 PWPRO='oe-core'
 PWUSER=''
 PWPASS=''
