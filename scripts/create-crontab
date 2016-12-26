@@ -23,7 +23,7 @@
 GUESTDIR=''
 SHAREDIR=''
 CRONDIR=$PWD
-FREQ='*/15 * * * *'
+FREQ='*/30 * * * *'
 
 function usage() {
     cat << EOF

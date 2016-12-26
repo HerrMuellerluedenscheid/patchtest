@@ -142,7 +142,7 @@ into account on the cronjob process can be added here, i.e. proxies
 crontab -u $USER $HOME/patchtest-cron/crontab
 ----
 
-By default, the cron runs every fifteen minutes but any other interval can be set using the parameter '-f'.
+By default, the cron runs every half hour but any other interval can be set using the parameter '-f'.
 The folders '$SHARE/mboxes' and '$SHARE/results' contain previous patchtest input/output data.
 Consecutive crons backup the later data inside the '$SHARE/backup' parent folder.
 
