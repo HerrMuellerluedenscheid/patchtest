@@ -7,8 +7,9 @@
 . <<guest, Guest execution>>
 . <<pw, Patchwork Git configuration>>
 . <<scenarios, Secundary scripts and common scenarios>>
-  .. <<fetching-mboxes, Fetching mboxes>>
-  .. <<storing-results, Storing results>>
+  .. <<fetching-series-from-patchwork, Fetching series from patchwork>>
+  .. <<testing-series, Testing series>>
+  .. <<fetching-testing-from-patchwork, Fetching and testing series from patchwork>>
   .. <<assembling-mboxes, Assembling tested mboxes>>
 
 [[intro]]
@@ -29,6 +30,11 @@ the execution needs to be done. If you plan to test your own patches (a good pra
 these are sent to the mailing list), the easiest way is to install and execute on your local
 host; in the other hand, if automatic testing is intended, the guest method
 is strongly recommended. Both methods are explained in the following sections.
+
+One last thing, the terms *patch*, *mbox* and *series* are used in several parts of the document
+but all mean the same: a code change (produced by diff or git) embedded in a mbox. Patchwork has
+the 'series' abstraction (collection of patchtest) but at the end the series is fetched as a single
+mbox and git-mboxes (produced by `git-format-patch`) are mboxes containing just a single patch.
 
 [[host]]
 === Host execution
@@ -187,10 +193,10 @@ There are two main scripts
 * 'test-mboxes' : Test one or more mboxes, possible assembling these into into a git-branch and/or
                   storing results and logs into a target folder
 
-[[fetching-mboxes]]
-==== Fetching mboxes
+[[fetching-series-from-patchwork]]
+==== Fetching series from patchwork
 
-In case you want want to fetch one ore more mboxes from a patchwork instance, you can do it in several ways:
+In case you want want to fetch one ore more series from a patchwork instance, you can do it in several ways:
 
 Fetching a particular series/revision:
 
@@ -227,11 +233,10 @@ describe in the <<guest, guest>> section.
 WARNING: if the 'git-pw.<project>.poll.timestamp' file is not represent, it will poll events but will
 not produce any mboxes. This avoids fetching many mboxes which may be not the desired behavior.
 
-[[storing-results]]
-==== Storing results
+[[testing-series]]
+==== Testing series
 
-You may need to stored the results that the `patchtest` script yields. Let's say you have some
-mboxes in a particular folder ('$PWD/mboxes') so you need to test them and store results into 'results'
+Let's say you have some mboxes in a particular folder ('$PWD/mboxes') so you need to test them and store results into 'results'
 
 [source,shell]
 ----
@@ -242,10 +247,36 @@ test-mboxes -r $PWD/openembedded-core -s $PWD/patchtest-oe/tests -o $PWD/results
 
 The output directory 'results' contains raw patchtest results and logs.
 
+[[fetching-testing-from-patchwork]]
+==== Fetching and testing latest series from patchwork
+
+As mentioned before, testing series automatically is not safe if done at host, but in case your
+host is already isolated in some other way as explained in the <<guest, guest>> section, run
+the following steps:
+
+* Prepare the folder containing the repositories needed by patchtest
+
+[source,shell]
+----
+create-share-folder $HOME/patchtest-host
+----
+
+* Every time you need to fetch and test latest series from the patchwork instance, run
+
+[source,shell]
+----
+host -s $HOME/patchtest-host
+----
+
+The first time, it will just fetch all mboxes **without** testing them (otherwise, it may fetch lots of
+mboxes which may not be desired), so real testing would happen after the second run and only if new
+series have arrived into the patchwork instance. All results (and plain logs files) are stored into
+'$HOME/patchtest-host/results' in `json` format.
+
 [[assembling-mboxes]]
 === Assembling tested mboxes
 
-Besides <<storing-results,storing results>>, one may be interested in assembling those patches
+Besides <<testing-series,storing results>>, one may be interested in assembling those patches
 that have pass **all** tests into a particular branch:
 
 [source,shell]

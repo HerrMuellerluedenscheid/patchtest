@@ -1,0 +1,152 @@
+#!/bin/bash
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# host: fetch mboxes from patchwork, test them and
+#        post summary to the patchwork instance
+#
+# NOTE: This script assumes that the user has already run the
+#       create-share-folder, containing the proper folders for
+#       patchtest execution
+#
+# Copyright (C) 2016 Intel Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+set -x
+# Default values
+SHAREDIR=''
+POST=''
+NOFETCH=''
+
+function usage() {
+    cat << EOF
+\$ $(basename $0) [OPTION]
+
+where OPTIONS are
+
+    -s <share dir> : Share directory between host and guest
+    -p             : Post results to the patchwork instance
+    -n             : Do not fetch, just update repos and launch guest machine
+EOF
+>&2
+
+    exit 1
+}
+
+while getopts ":s:pnh" opt; do
+    case $opt in
+	s)
+	    SHAREDIR=$OPTARG
+	    ;;
+	p)
+	    POST='x'
+	    ;;
+	n)
+	    NOFETCH='x'
+	    ;;
+	h)
+	    usage
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG" >&2
+	    usage
+	    ;;
+	:)
+	    echo "Option -$OPTARG requires an argument." >&2
+	    usage
+	    ;;
+    esac
+done
+
+function pull() {
+    local path=$1
+    (
+	cd $path
+	git checkout master
+	git pull
+    )
+}
+
+function clean() {
+    local path=$1
+    (
+	cd $path
+	git am --abort
+	git reset --hard
+	git clean -f -e ".git-pw*"
+    )
+}
+
+test -z "$SHAREDIR" && { echo "Provide the share directory folder created with create-share-folder script"; usage; }
+
+# make sure the poky build folder exists
+test ! -d "$SHAREDIR" && { echo "Provide the share directory folder created with create-share-folder script"; usage; }
+
+SHAREDIR=$(readlink -e $SHAREDIR)
+
+# Define repo location and names
+PW=$SHAREDIR/patchwork
+PT=$SHAREDIR/patchtest
+PTOE=$SHAREDIR/patchtest-oe
+OECORE=$SHAREDIR/openembedded-core
+BB=$OECORE/bitbake
+
+# Clone or pull share repos
+for repo in $PW $PT $PTOE $OECORE $BB; do
+    clean $repo && pull $repo
+done
+
+# include scripts into PATH
+export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
+
+if [ -z "$NOFETCH" ]; then
+    # Get latest mboxes from the PW instance
+    fetch-mboxes -r $OECORE -m $SHAREDIR/tmp/mboxes
+
+    # if now new mboxes, just quit
+    test ! -d $SHAREDIR/tmp/mboxes && { echo "Exiting"; exit 0; }
+
+    # Check if old mboxes are present and backup these and its results
+    # TODO: we must thing on something smarter to store past results
+    # The first approach was the use of a git repository and git notes
+    # but in this case a branch needs to be created in every run
+    # and then use the post-summary script to get data from it.
+    # A simpler approach is just storing plain texts and it is
+    # the scripting does at the moment.
+    if [ -d $SHAREDIR/mboxes ]; then
+
+        # Unique folder to store previous mboxes/results
+        now="$(date --iso-8601=minutes)"
+
+        # Define and create unique backup dir
+        backup="$SHAREDIR/backup/$now"
+        test ! -d $backup && mkdir -p $backup
+
+        # backup mboxes
+        mv $SHAREDIR/mboxes $backup/mboxes
+
+        # backup results (if exists)
+        test -d $SHAREDIR/results && mv $SHAREDIR/results $backup/results
+    fi
+
+    # Move latest mboxes
+    mv $SHAREDIR/tmp/mboxes $SHAREDIR/mboxes
+fi
+
+test-mboxes -r $OECORE -s $PTOE/tests -o $SHAREDIR/results $SHAREDIR/mboxes
+
+# Post patchtest results ($SHAREDIR/results) into patchwork
+if [ -n "$POST" ]; then
+    post-summary -r $OECORE -R $SHAREDIR/results
+fi
