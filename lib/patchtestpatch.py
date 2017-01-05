@@ -61,7 +61,7 @@ class Patch(object):
     @property
     def branch(self):
         if not self._branch:
-            self._branch = get_branch(self.contents)
+            self._branch = get_branch(self._path)
         return self._branch
 
     def setmergestatus(self, status):

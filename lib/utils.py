@@ -24,6 +24,7 @@ import subprocess
 import logging
 import sys
 import re
+import mailbox
 
 class CmdException(Exception):
     """ Simple exception class where its attributes are the ones passed when instantiated """
@@ -135,15 +136,17 @@ def logger_create(name):
     logger.setLevel(logging.INFO)
     return logger
 
-def get_subject_prefix(data):
+def get_subject_prefix(path):
     prefix = ""
-    pattern1 = re.compile("(?<=Subject: )(\[.*\])")
+    mbox = mailbox.mbox(path)
 
-    for subject in data.split('\n'):
-        match1 = pattern1.search(subject)
-        if match1:
-            prefix = match1.group(1)
-            break
+    if len(mbox):
+        subject = mbox[0]['subject']
+        if subject:
+            pattern = re.compile("(\[.*\])", re.DOTALL)
+            match = pattern.search(subject)
+            if match:
+                prefix = match.group(1)
 
     return prefix
 
@@ -159,9 +162,9 @@ def valid_branch(branch):
 
     return not invalid
 
-def get_branch(data):
+def get_branch(path):
     """ Get the branch name from mbox """
-    fullprefix = get_subject_prefix(data)
+    fullprefix = get_subject_prefix(path)
     branch, branches, valid_branches = None, [], []
 
     if fullprefix:
