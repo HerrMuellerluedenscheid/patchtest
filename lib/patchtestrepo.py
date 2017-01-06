@@ -23,7 +23,7 @@ import os
 import utils
 import logging
 import json
-from patchtestpatch import Patch
+import patchtestpatch
 
 logger = logging.getLogger('patchtest')
 info=logger.info
@@ -35,7 +35,7 @@ class Repo(object):
 
     def __init__(self, patch, repodir, commit=None, branch=None):
         self._repodir = repodir
-        self._patch = Patch(patch)
+        self._patch = patchtestpatch.Patch(patch)
         self._current_branch = self._get_current_branch()
 
         # Target Branch

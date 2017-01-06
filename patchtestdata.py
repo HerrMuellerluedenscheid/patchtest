@@ -29,9 +29,8 @@
 
 import os
 import argparse
-import json
 import collections
-from tempfile import mkstemp
+import tempfile
 import logging
 
 logger=logging.getLogger('patchtest')
@@ -45,7 +44,7 @@ class PatchTestStdIn(object):
 
     @classmethod
     def namespace_stdin(cls, inputlines):
-        (_, patch) = mkstemp()
+        (_, patch) = tempfile.mkstemp()
         with open(patch,'w') as patchfd:
             for line in inputlines:
                 patchfd.write(line)

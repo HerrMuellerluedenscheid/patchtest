@@ -21,7 +21,7 @@
 #
 
 import logging
-from utils import get_branch
+import utils
 
 logger = logging.getLogger('patchtest')
 
@@ -61,7 +61,7 @@ class Patch(object):
     @property
     def branch(self):
         if not self._branch:
-            self._branch = get_branch(self._path)
+            self._branch = utils.get_branch(self._path)
         return self._branch
 
     def setmergestatus(self, status):
