@@ -90,7 +90,8 @@ This method is recommended when patch testing is done automatically (i.e. throug
 if you want to test your own patches, the <<host,host>> approach is a better option for making the code
 cycle faster ('code-test-code').
 
-NOTE: The following commands assumes that the 'patchtest/scripts' folder is visible on '$PATH'
+NOTE: The following commands assumes that 'patchwork/git-pw', 'patchtest' and 'patchtest/scripts' folders
+are visible on '$PATH'
 
 * Create the guest machine, specifying the directory where the guest machine will be located
 

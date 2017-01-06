@@ -122,9 +122,6 @@ for repo in $PW $PT $PTOE $OECORE $BB; do
     clean $repo && pull $repo
 done
 
-# include scripts into PATH
-export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
-
 if [ -z "$NOFETCH" ]; then
     # Get latest mboxes from the PW instance
     fetch-mboxes -r $OECORE -m $SHAREDIR/tmp/mboxes

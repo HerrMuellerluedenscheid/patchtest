@@ -90,6 +90,10 @@ cat > $CRONDIR/cronenv << EOF
 # Place any environment variables needed
 # before running 'guest' script
 #
+# include patch* repos into PATH
+PATH="$SHAREDIR/patchwork/git-pw:$SHAREDIR/patchtest:$SHAREDIR/patchtest/scripts:\$PATH"
+
+# Possible settings if cron is run under a proxy
 #unset  SSH_AUTH_SOCK
 #export GIT_PROXY_COMMAND=""
 #export ftp_proxy=""
