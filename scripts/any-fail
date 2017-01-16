@@ -22,7 +22,7 @@ import fileinput
 import json
 
 def any_fail(jsonlines):
-    for jsonline in fileinput.input('-'):
+    for jsonline in jsonlines:
         result = json.loads(jsonline)
 	if result['status'] == 'FAIL':
            break
