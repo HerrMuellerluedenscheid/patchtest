@@ -38,12 +38,18 @@ class Repo(object):
         self._patch = patchtestpatch.Patch(patch)
         self._current_branch = self._get_current_branch()
 
+        # targeted branch defined on the patch may be invalid, so make sure there
+        # is a corresponding remote branch
+        valid_patch_branch = None
+        if self._patch.branch in self.upstream_branches():
+            valid_patch_branch = self._patch.branch
+            
         # Target Branch
         # Priority (top has highest priority):
         #    1. branch given at cmd line
         #    2. branch given at the patch
         #    3. current branch
-        self._branch = branch or self._patch.branch or self._current_branch
+        self._branch = branch or valid_patch_branch or self._current_branch
 
         # Target Commit
         # Priority (top has highest priority):
@@ -53,7 +59,7 @@ class Repo(object):
         #    3. current HEAD
         self._commit = self._get_commitid(commit) or \
           self._get_commitid(branch) or \
-          self._get_commitid(self._patch.branch) or \
+          self._get_commitid(valid_patch_branch) or \
           self._get_commitid('HEAD')
 
         self._workingbranch = "%s_%s" % (Repo.prefix, os.getpid())
@@ -153,6 +159,14 @@ class Repo(object):
                     pass
 
         return None
+
+    def upstream_branches(self):
+        cmd = {'cmd':['git', 'branch', '--remotes']}
+        remote_branches = self._exec(cmd)[0]['stdout']
+
+        # just get the names, without the remote name
+        branches = set(branch.split('/')[-1] for branch in remote_branches.splitlines())
+        return branches
 
     def merge(self):
         if self._patchcanbemerged:
