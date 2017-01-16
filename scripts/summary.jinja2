@@ -6,7 +6,7 @@ series by patchtest resulting in the following {% if fail %}failures{% else %}re
 
 {% for result in results %}
 {% if result.commit %}* Patch            {{ result.commit.subject }}
- {% else %}* {% endif %}Issue            {{ result.issue }} [{{ result.test_name }}]
+ {% else %}* {% endif %}Issue            {% if result.issue %} {{ result.issue }} [{{ result.test_name }}] {% else %} [{{ result.test_name }}] {% endif %}
 {% if result.fix %}  Suggested fix    {{ result.fix }}
 {% endif %}{% for extra in result.data %}  {{ extra[0].ljust(16) }} {{ extra[1] }}
 {% endfor %}{% endfor %}

@@ -119,7 +119,7 @@ def getResult(patch, mergepatch):
 
         def addSkip(self, test, reason):
             if pti.json:
-                print(self.JSON(self.skip, test))
+                print(self.JSON(self.skip, reason))
             else:
                 print('{} {}'.format(self.skip, test.id()))
 
