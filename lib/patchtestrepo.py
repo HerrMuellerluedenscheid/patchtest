@@ -69,12 +69,17 @@ class Repo(object):
 
         self._patchmerged = False
 
-        # Check if patch can be merged
+        # Check if patch can be merged using git-am
         self._patchcanbemerged = True
         try:
-            self._exec({'cmd': ['git', 'apply', '--check', '--verbose'], 'input': self._patch.contents})
+            self._exec({'cmd': ['git', 'am'], 'input': self._patch.contents})
         except utils.CmdException as ce:
+            self._exec({'cmd': ['git', 'am', '--abort']})
             self._patchcanbemerged = False
+        finally:
+            # if patch was applied, remove it
+            if self._patchcanbemerged:
+                self._exec({'cmd':['git', 'reset', '--hard', self._commit]})
 
         # for debugging purposes, print all repo parameters
         logger.debug("Parameters")
