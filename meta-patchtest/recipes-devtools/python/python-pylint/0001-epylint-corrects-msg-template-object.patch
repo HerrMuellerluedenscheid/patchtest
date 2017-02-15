@@ -1,0 +1,34 @@
+From 0e00ae491ec1c4dcff8e0482147b679551e47cf1 Mon Sep 17 00:00:00 2001
+From: Daniela Plascencia <daniela.plascencia@linux.intel.com>
+Date: Thu, 2 Feb 2017 11:04:07 -0600
+Subject: [PATCH] epylint: corrects msg-template object
+
+The way this object is defined, won't let the user modify the message
+template when pylint is called from a python script. Rearranging the
+order of variables on its definition prevents this behavior.
+
+Upstream-Status: Pending
+
+Signed-off-by: Daniela Plascencia <daniela.plascencia@linux.intel.com>
+---
+ pylint/epylint.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pylint/epylint.py b/pylint/epylint.py
+index 9de06196..0b714fb4 100755
+--- a/pylint/epylint.py
++++ b/pylint/epylint.py
+@@ -87,9 +87,9 @@ def lint(filename, options=None):
+     # Ensure we use the python and pylint associated with the running epylint
+     run_cmd = "import sys; from pylint.lint import Run; Run(sys.argv[1:])"
+     options = options or ['--disable=C,R,I']
+-    cmd = [sys.executable, "-c", run_cmd] + options + [
++    cmd = [sys.executable, "-c", run_cmd] + [
+         '--msg-template', '{path}:{line}: {category} ({msg_id}, {symbol}, {obj}) {msg}',
+-        '-r', 'n', child_path]
++        '-r', 'n', child_path] + options
+     process = Popen(cmd, stdout=PIPE, cwd=parent_path, env=_get_env(),
+                     universal_newlines=True)
+
+--
+2.11.0
