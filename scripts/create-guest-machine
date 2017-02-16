@@ -27,7 +27,7 @@
 #             qemuparams="-snapshot -fsdev local,id=test_dev,path=<share folder>,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount"
 #
 #     where <share folder is the one created with the create-share script
-
+set -x
 # defaults values
 GUESTDIR=''
 PATCHTEST=''
@@ -113,9 +113,13 @@ GUESTDIR=$(readlink -e $GUESTDIR)
 [ -d "$METAOE" ]    && { METAOE=$(readlink -e $METAOE); }
 [ -d "$POKY" ]      && { POKY=$(readlink -e $POKY); }
 
-clone git://git.yoctoproject.org/patchtest $PATCHTEST
-clone git://git.openembedded.org/meta-openembedded $METAOE $YPBRANCH
-clone git://git.yoctoproject.org/poky $POKY $YPBRANCH
+
+# clone just in case folders does not contain .git folders
+[ ! -d "$PATCHTEST/.git" ] && { clone git://git.yoctoproject.org/patchtest $PATCHTEST; }
+[ ! -d "$METAOE/.git" ]    && { clone git://git.openembedded.org/meta-openembedded $METAOE $YPBRANCH; }
+[ ! -d "$POKY/.git" ]      && { clone git://git.yoctoproject.org/poky $POKY $YPBRANCH; }
+
+
 
 cd $POKY
 . oe-init-build-env
