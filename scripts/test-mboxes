@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -u
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
@@ -75,11 +75,21 @@ function testpatch() {
     echo -e "${patch}"
 
     tmp="$(mktemp)"
+
     # run patchtest
     PTRESULTS="$(patchtest $patch --repo-dir $repodir --start-dir $startdir --json 2>$tmp)"
+
+    # store error and return if there was an error on pt execution
+    if [ $? -ne 0 ]; then
+	cp $tmp "$outputdir/$patchfn.stderr"
+	rm $tmp
+	return
+    fi
+       
     PTLOG="$(cat $tmp)"
     rm $tmp
 
+    # store log
     if [ -n "$outputdir" ]; then
 	patchfn=$(basename $patch)
 	echo "$PTRESULTS" > "$outputdir/$patchfn.json"
