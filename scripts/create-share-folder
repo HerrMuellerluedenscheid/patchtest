@@ -74,13 +74,41 @@ done
 shift $((OPTIND-1))
 
 
-function clone() {
+# update (repository) can mean any of this:
+#   1. clone if repository does not exist
+#   2. clone if repository is not valid
+#   3. clean not-tracked files and pull latest changes from remote
+function update_repository() {
+    # check input params are present
+    [ -z "$1" -o -z "$2" ] && { return; }
+
     local REPOREMOTE=$1
     local REPODIR=$2
+
     if [ ! -d $REPODIR ]; then
 	git clone $REPOREMOTE $REPODIR
     else
-	( cd $REPODIR;git pull )
+	# if not a valid git repo, remove it and clone it again
+	(
+	    CDIR="$PWD"
+	    cd $REPODIR
+	    if ! git status > /dev/null 2&>1 ; then
+		cd $CDIR
+		rm -rf $REPODIR
+		git clone $REPOREMOTE $REPODIR
+	    fi
+	)
+
+	# do some basic cleaning
+	(
+	    cd $REPODIR
+	    git am --abort --quiet
+	    git reset --hard --quiet
+	    git clean -f -e ".git-pw*" --quiet
+	)
+	
+	# pull latest changes
+	( cd $REPODIR; git pull )
     fi
 }
 
@@ -94,12 +122,13 @@ fi
 
 SHAREDIR=$(readlink -e $SHAREDIR)
 
-# Clone or pull repos
-clone git://git.yoctoproject.org/patchwork $SHAREDIR/patchwork
-clone git://git.yoctoproject.org/patchtest $SHAREDIR/patchtest
-clone git://git.yoctoproject.org/patchtest-oe $SHAREDIR/patchtest-oe
-clone git://git.openembedded.org/openembedded-core $SHAREDIR/openembedded-core
-clone git://git.openembedded.org/bitbake $SHAREDIR/openembedded-core/bitbake
+# update repos
+update_repository git://git.yoctoproject.org/patchwork $SHAREDIR/patchwork
+update_repository git://git.yoctoproject.org/patchtest $SHAREDIR/patchtest
+update_repository git://git.yoctoproject.org/patchtest-oe $SHAREDIR/patchtest-oe
+update_repository git://git.openembedded.org/openembedded-core $SHAREDIR/openembedded-core
+update_repository git://git.openembedded.org/bitbake $SHAREDIR/openembedded-core/bitbake
+
 cd $SHAREDIR/openembedded-core
 
 # Set git-pw configuration
