@@ -27,7 +27,7 @@
 #             qemuparams="-snapshot -fsdev local,id=test_dev,path=<share folder>,security_model=mapped -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount"
 #
 #     where <share folder is the one created with the create-share script
-set -x
+
 # defaults values
 GUESTDIR=''
 PATCHTEST=''
