@@ -79,9 +79,10 @@ function testpatch() {
     # run patchtest
     PTRESULTS="$(patchtest $patch --repo-dir $repodir --start-dir $startdir --json 2>$tmp)"
 
-    # store error and return if there was an error on pt execution
+    # store stdout/stderr and return if there was an error on pt execution
     if [ $? -ne 0 ]; then
-	cp $tmp "$outputdir/$patchfn.stderr"
+	echo "$PTRESULTS" > "$outputdir/$patchfn.stderr"
+	cat $tmp >> "$outputdir/$patchfn.stderr"
 	rm $tmp
 	return
     fi
