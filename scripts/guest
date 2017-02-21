@@ -101,6 +101,9 @@ test_network || { echo 'No network connection, quitting'; exit 1; }
 # update share folder
 create-share-folder -s $SHAREDIR
 
+# remove build folder
+test -d $OECORE/build && rm -rf $OECORE/build
+
 if [ -z "$NOFETCH" ]; then
     # Get latest mboxes from the PW instance
     fetch-mboxes -r $OECORE -m $SHAREDIR/tmp/mboxes
