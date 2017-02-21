@@ -32,11 +32,20 @@ def summary(stdin, template, outfile, fail, params):
     results = list()
     for line in stdin:
         test = json.loads(line)
+
+        # check must-keys
+        if not (test.has_key('status') and test.has_key('results')):
+            continue
+
         teststatus, testresults  = test['status'], test['results']
         if fail:
             if teststatus != 'FAIL':
                 continue
 
+        # check results contain the test-id key
+        if not testresults.has_key('id'):
+            continue
+            
         testresults['test_name'] = testresults['id'].split('.')[-1]
         testresults['status'] = teststatus
         results.append(testresults)
