@@ -177,15 +177,21 @@ def run(patch):
     return premerge_result or postmerge_result
 
 def main():
+    tmp_patch = False
     patch = pti.patch
     if not sys.stdin.isatty():
+        tmp_patch = True
         patch = pti.namespace_stdin(fileinput.input('-'))
 
     if os.path.getsize(patch) == 0:
         logger.error('patchtest: patch is empty')
         return 1
 
-    return run(patch)
+    try:
+        run(patch)
+    finally:
+        if tmp_patch:
+            os.remove(patch)
 
 if __name__ == '__main__':
     ret = 1
