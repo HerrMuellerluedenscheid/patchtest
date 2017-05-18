@@ -96,10 +96,10 @@ PTOE=$SHAREDIR/patchtest-oe
 OECORE=$SHAREDIR/openembedded-core
 BB=$OECORE/bitbake
 
-test_network || { echo 'No network connection, quitting'; exit 1; }
-
 # update share folder
 create-share-folder -s $SHAREDIR
+
+test_network || { echo 'No network connection, quitting'; exit 1; }
 
 # remove build folder
 test -d $OECORE/build && rm -rf $OECORE/build
