@@ -76,7 +76,7 @@ done
 
 function test_network() {
     cd $OECORE
-    git pw list -s `date --iso-8601` > /dev/null 2&>1
+    git pw list -s `date --iso-8601` 2>&1
 }
 
 test -z "$SHAREDIR" && { echo "Provide the share directory folder created with create-share-folder script"; usage; }
