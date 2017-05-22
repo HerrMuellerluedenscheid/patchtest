@@ -92,7 +92,7 @@ function update_repository() {
 	(
 	    CDIR="$PWD"
 	    cd $REPODIR
-	    if ! git status > /dev/null 2&>1 ; then
+	    if ! git status > /dev/null 2>&1 ; then
 		cd $CDIR
 		rm -rf $REPODIR
 		git clone $REPOREMOTE $REPODIR
