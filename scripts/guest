@@ -99,7 +99,7 @@ BB=$OECORE/bitbake
 # update share folder
 create-share-folder -s $SHAREDIR
 
-test_network || { echo 'No network connection, quitting'; exit 1; }
+test_network || { echo "$(date): No network connection, quitting"; exit 1; }
 
 # remove build folder
 test -d $OECORE/build && rm -rf $OECORE/build
