@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
@@ -87,11 +86,12 @@ def exec_cmd(cmd, cwd, ignore_error=False, input=None, strip=True, updateenv={})
     env = os.environ
     env.update(_cmd['updateenv'])
 
-    _command = [str(e) for e in _cmd['cmd']]
+    _command = [e for e in _cmd['cmd']]
     p = subprocess.Popen(_command,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
+                         universal_newlines=True,
                          cwd=cwd,
                          env=env)
 

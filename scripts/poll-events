@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # patchtest-poll-events: Poll events of type --series-new-revision from patchwork
 #                        and return these as a series/revision list.
@@ -31,14 +31,14 @@ def pollseries(repodir, pwproject, since):
 
     if since:
         cmd += " --since %s" % since
-        events = subprocess.check_output(cmd, shell=True)
+        events = subprocess.check_output(cmd, shell=True, universal_newlines=True)
     else:
         timestamp = '.git-pw.%s.poll.timestamp' % pwproject
         if os.path.exists(os.path.join(repodir, timestamp)):
-            events = subprocess.check_output(cmd, shell=True)
+            events = subprocess.check_output(cmd, shell=True, universal_newlines=True)
         else:
             # just consume all events
-            while subprocess.check_output(cmd, shell=True):
+            while subprocess.check_output(cmd, shell=True, universal_newlines=True):
                 pass
 
     for event in events.splitlines():
