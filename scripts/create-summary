@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Produce a summary based on input (--json) results coming from patchtest
 #
@@ -34,7 +34,7 @@ def summary(stdin, template, outfile, fail, params):
         test = json.loads(line)
 
         # check must-keys
-        if not (test.has_key('status') and test.has_key('results')):
+        if 'status' not in test and 'results' not in test:
             continue
 
         teststatus, testresults  = test['status'], test['results']
@@ -43,7 +43,7 @@ def summary(stdin, template, outfile, fail, params):
                 continue
 
         # check results contain the test-id key
-        if not testresults.has_key('id'):
+        if 'id' not in testresults:
             continue
             
         testresults['test_name'] = testresults['id'].split('.')[-1]
@@ -59,7 +59,7 @@ def summary(stdin, template, outfile, fail, params):
         with codecs.open(outfile, 'w', encoding='utf-8', errors='ignore') as fd:
             fd.write(render)
     else:
-        print(render.encode('utf-8'))
+        print(render)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create a summary")
