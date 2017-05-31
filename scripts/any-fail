@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Check if there is any 'fail' test case on input
 #
@@ -24,7 +24,7 @@ import json
 def any_fail(jsonlines):
     for jsonline in jsonlines:
         result = json.loads(jsonline)
-	if result['status'] == 'FAIL':
+        if result['status'] == 'FAIL':
            break
     else:
         # all results either pass or skip
@@ -40,4 +40,3 @@ if __name__ == '__main__':
         import traceback
         traceback.print_exc(5)
     sys.exit(ret)
-
