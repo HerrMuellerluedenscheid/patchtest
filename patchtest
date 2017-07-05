@@ -186,6 +186,7 @@ def main():
         logger.error('patchtest: patch is empty')
         return 1
 
+    logger.info('Testing patch %s' % patch)
     try:
         run(patch)
     finally:
