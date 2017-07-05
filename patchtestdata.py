@@ -62,25 +62,18 @@ class PatchTestArgs(object):
         parser = argparse.ArgumentParser()
 
         parser.add_argument('patch', metavar='PATCH',
-                            help='The patch to be tested by patchtest')
+                            help='The patch to be tested')
 
-        parser.add_argument('--repo-dir', '-r',
-                            dest='repodir',
-                            type=os.path.abspath,
-                            default=os.getcwd(),
+        parser.add_argument('repodir', metavar='REPO',
                             help="Name of the repository where patch is merged")
+
+        parser.add_argument('startdir', metavar='TESTDIR',
+                            help="Directory where test cases are located")
 
         parser.add_argument('--top-level-directory', '-t',
                             dest='topdir',
                             default=None,
                             help="Top level directory of project (defaults to start directory)")
-
-        startdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tests')
-        parser.add_argument('--start-dir', '-s',
-                            dest='startdir',
-                            type=os.path.abspath,
-                            default=startdir,
-                            help="Directory to start discover")
 
         parser.add_argument('--pattern', '-p',
                             dest='pattern',

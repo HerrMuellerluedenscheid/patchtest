@@ -77,7 +77,7 @@ function testpatch() {
     tmp="$(mktemp)"
 
     # run patchtest
-    PTRESULTS="$(patchtest $patch --repo-dir $repodir --start-dir $startdir --json 2>$tmp)"
+    PTRESULTS="$(patchtest $patch $repodir $startdir --json 2>$tmp)"
 
     # store stdout/stderr and return if there was an error on pt execution
     if [ $? -ne 0 ]; then

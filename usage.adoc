@@ -72,7 +72,7 @@ or an standard mbox fetched from patchwork)
 
 [source,shell]
 ----
-patchtest <some OE-core patch> --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+patchtest <some OE-core patch> <path OE-core directory> <path to pachtest-oe test directory>
 ----
 
 or providing a patch through the standard input
@@ -80,7 +80,7 @@ or providing a patch through the standard input
 [source,shell]
 ----
 cd <path to OE-core repository>
-git format-patch -1 --stdout | patchtest - --repo-dir <path to patchtest> --start-dir <path to /pachtest-oe/tests>
+git format-patch -1 --stdout | patchtest - <path to patchtest> <path to /pachtest-oe/tests>
 ----
 
 [[guest]]
@@ -174,7 +174,7 @@ Fetch and test in the same command line
 
 [source,shell]
 ----
-git pw mbox 1487 | patchtest - --repo-dir $PWD --start-dir <patchtest-oe/tests>
+git pw mbox 1487 | patchtest - $PWD <patchtest-oe/tests>
 ----
 
 [[scenarios]]
