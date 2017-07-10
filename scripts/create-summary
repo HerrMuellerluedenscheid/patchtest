@@ -31,7 +31,11 @@ def summary(stdin, template, outfile, fail, params):
 
     results = list()
     for line in stdin:
-        test = json.loads(line)
+        try:
+            test = json.loads(line)
+        except ValueError:
+            # ignore possible non-json input
+            continue
 
         # check must-keys
         if 'status' not in test and 'results' not in test:
