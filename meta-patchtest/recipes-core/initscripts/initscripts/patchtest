@@ -26,6 +26,9 @@ PT="$MP/patchtest"
 REPO="$MP/openembedded-core"
 SUITESTART="$MP/patchtest-oe/tests"
 
+HOME_ROOT="$(cut -f6 /etc/passwd -d':' | grep root)"
+LOCAL_REPO="${HOME_ROOT}/openembedded-core"
+
 # include patchtest related scripts into PATH
 export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
 
@@ -33,14 +36,22 @@ export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
 git config --global user.email guest@patchtest.com
 git config --global user.name "Guest"
 
-# execute and place results on $RESULTS folder
-test-mboxes -r $REPO \
-	    -s $SUITESTART \
-	    -o $RESULTS \
-	    $MBOXES
+# temporal workaround to avoid the "too many open files" error
+sysctl -w fs.file-max=100000
 
-# un-mount the share folder
-umount "$MP"
+if [ -d $REPO ]; then
+
+    # copy the share repo in locally
+    cp -a $REPO $HOME_ROOT
+
+    # clean local repo and prepare the environment
+    cd $LOCAL_REPO
+    git reset --hard; git clean -fd;
+    source ./oe-init-build-env
+
+    # execute and place results on $RESULTS folder
+    test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES
+fi
 
 # poweroff the machine
 init 0

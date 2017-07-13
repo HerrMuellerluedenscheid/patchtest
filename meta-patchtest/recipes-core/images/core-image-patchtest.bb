@@ -4,6 +4,9 @@ HOMEPAGE = "http://git.yoctoproject.org/cgit/cgit.cgi/patchtest/"
 
 IMAGE_FSTYPES = "ext4"
 
+# include 500MB of extra space so it can store oe-core & bitbake
+IMAGE_ROOTFS_EXTRA_SPACE = "512000"
+
 IMAGE_INSTALL = "\
     packagegroup-core-boot \
     packagegroup-self-hosted \
