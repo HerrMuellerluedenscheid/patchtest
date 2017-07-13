@@ -76,6 +76,8 @@ function testpatch() {
 
     tmp="$(mktemp)"
 
+    patchfn=$(basename $patch)
+
     # run patchtest
     PTRESULTS="$(patchtest $patch $repodir $startdir --json 2>$tmp)"
 
@@ -92,7 +94,6 @@ function testpatch() {
 
     # store log
     if [ -n "$outputdir" ]; then
-	patchfn=$(basename $patch)
 	echo "$PTRESULTS" > "$outputdir/$patchfn.json"
 	echo "$PTLOG" > "$outputdir/$patchfn.log"
     fi
