@@ -91,7 +91,7 @@ function clone() {
     else
 	( cd $REPODIR;git fetch origin )
     fi
-    [ -n "$BRANCH" ] && { git checkout $BRANCH; }
+    [ -n "$BRANCH" ] && { cd $REPODIR; git checkout $BRANCH; }
 }
 
 # main
