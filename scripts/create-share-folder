@@ -73,6 +73,18 @@ while getopts ":s:u:p:U:P:h" opt; do
 done
 shift $((OPTIND-1))
 
+function set_patchwork_configs() {
+    local URL=$1
+    local PRO=$2
+    local USER=$3
+    local PASS=$4
+
+    # Set git-pw configuration
+    test -n "$URL" &&  git config patchwork.default.url $URL
+    test -n "$PRO" &&  git config patchwork.default.project $PRO
+    test -n "$USER" && git config patchwork.default.user $USER
+    test -n "$PASS" && git config patchwork.default.password $PASS
+}
 
 # update (repository) can mean any of this:
 #   1. clone if repository does not exist
@@ -93,9 +105,16 @@ function update_repository() {
 	    CDIR="$PWD"
 	    cd $REPODIR
 	    if ! git status > /dev/null 2>&1 ; then
-		cd $CDIR
-		rm -rf $REPODIR
+		# if repo has patchwork configuration, extract it before removing the folder
+		R_PWURL="$(grep  -A4 '\[patchwork' .git/config | grep url      | cut -f2 -d'=')"
+		R_PWPRO="$(grep  -A4 '\[patchwork' .git/config | grep project  | cut -f2 -d'=')"
+		R_PWUSER="$(grep -A4 '\[patchwork' .git/config | grep user     | cut -f2 -d'=')"
+		R_PWPASS="$(grep -A4 '\[patchwork' .git/config | grep password | cut -f2 -d'=')"
+
+		cd $CDIR;rm -rf $REPODIR
 		git clone $REPOREMOTE $REPODIR
+
+		cd $REPODIR;set_patchwork_configs $R_PWURL $R_PWPRO $R_PWUSER $R_PWPASS
 	    fi
 	)
 
@@ -129,10 +148,6 @@ update_repository git://git.yoctoproject.org/patchtest-oe $SHAREDIR/patchtest-oe
 update_repository git://git.openembedded.org/openembedded-core $SHAREDIR/openembedded-core
 update_repository git://git.openembedded.org/bitbake $SHAREDIR/openembedded-core/bitbake
 
-cd $SHAREDIR/openembedded-core
+# finally overwrite previous git's pw settings with the ones pass by the user
+cd $SHAREDIR/openembedded-core; set_patchwork_configs $PWURL $PWPRO $PWUSER $PWPASS
 
-# Set git-pw configuration
-test -n "$PWURL" &&  git config patchwork.default.url $PWURL
-test -n "$PWPRO" &&  git config patchwork.default.project $PWPRO
-test -n "$PWUSER" && git config patchwork.default.user $PWUSER
-test -n "$PWPASS" && git config patchwork.default.password $PWPASS
