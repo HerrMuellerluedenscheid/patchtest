@@ -7,7 +7,7 @@ DESCRIPTION = "Packages required to run patchtest-oe test cases using patchtest"
 inherit packagegroup
 
 RDEPENDS_${PN} = "\
-    python-pyparsing \
-    python-unidiff \
-    python-pylint \
+    python3-pyparsing \
+    python3-unidiff \
+    python3-pylint \
     "
