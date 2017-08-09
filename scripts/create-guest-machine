@@ -135,6 +135,12 @@ sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
 cat >> $POKY/build/conf/auto.conf << EOF
 $PTSMARK
 MACHINE = "$MACHINE"
+
+# The preferred kernel version in poky (4.10%, master) returns an error whilst
+# executing patchtest on guest. Changing the preferred version to 4.9% as it
+# is more suitable and does not present any errors.
+PREFERRED_VERSION_linux-yocto_qemux86-64 = "4.9%"
+
 PACKAGE_CLASSES = "package_ipk"
 IMAGE_FSTYPES = "ext4"
 SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/dev/PATH"
