@@ -132,7 +132,7 @@ PTEMARK='#PATCHTEST END'
 sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/local.conf
 sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
 
-cat >> $POKY/build/conf/local.conf << EOF
+cat >> $POKY/build/conf/auto.conf << EOF
 $PTSMARK
 MACHINE = "$MACHINE"
 PACKAGE_CLASSES = "package_ipk"
@@ -143,6 +143,7 @@ $PTEMARK
 EOF
 
 cat >> $POKY/build/conf/bblayers.conf << EOF
+
 $PTSMARK
 BBLAYERS += "$METAOE/meta-oe"
 BBLAYERS += "$METAOE/meta-python"
