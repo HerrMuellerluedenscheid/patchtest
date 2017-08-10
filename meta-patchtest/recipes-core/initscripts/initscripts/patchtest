@@ -40,17 +40,23 @@ git config --global user.name "Guest"
 sysctl -w fs.file-max=100000
 
 if [ -d $REPO ]; then
-
     # copy the share repo in locally
     cp -a $REPO $HOME_ROOT
 
-    # clean local repo and prepare the environment
-    cd $LOCAL_REPO
-    git reset --hard; git clean -fd;
-    source ./oe-init-build-env
+    # clean local repo
+    ( cd $LOCAL_REPO; git reset --hard; git clean -fd; )
 
-    # execute and place results on $RESULTS folder
-    test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES
+    ( # python requires UTF-8
+      export LC_ALL=en_US.UTF-8;
+      export LANG=en_US.UTF-8;
+      export LANGUAGE=en_US.UTF-8;
+
+      # prepare the environment
+      cd $LOCAL_REPO;
+      source ./oe-init-build-env build;
+
+      # execute patchtest through test-mboxes
+      test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES; )
 fi
 
 # poweroff the machine
