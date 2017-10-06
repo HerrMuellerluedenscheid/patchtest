@@ -146,7 +146,7 @@ fi
     		runqemu qemux86-64 core-image-patchtest \
     			nographic kvm \
     			qemuparams="-snapshot \
-				    -m 512 \
+				    -m 2048 \
     	                            -fsdev local,id=test_dev,path=$SHAREDIR,security_model=mapped \
     	                            -device virtio-9p-pci,fsdev=test_dev,mount_tag=test_mount"
     	else
