@@ -14,52 +14,59 @@
 
 test "$VERBOSE" != no && echo "Executing patchtest..."
 
+# Set patchtest-user home path
+PAT_USER="patchtest-user"
+HOME_USER="$(cut -f6 /etc/passwd -d':' | grep $PAT_USER)"
+
 # Mount point
-MP="/patchtest"
+MP="$HOME_USER/patchtest"
 test ! -d "$MP" && mkdir "$MP"
 mount -t 9p -o trans=virtio test_mount "$MP" -oversion=9p2000.L,posixacl,cache=loose
 
 MBOXES="$MP/mboxes"
-RESULTS="$MP/results"
+RESULTS="$HOME_USER/results"
 PW="$MP/patchwork"
 PT="$MP/patchtest"
 REPO="$MP/openembedded-core"
 SUITESTART="$MP/patchtest-oe/tests"
+LOCAL_REPO="${HOME_USER}/openembedded-core"
 
-HOME_ROOT="$(cut -f6 /etc/passwd -d':' | grep root)"
-LOCAL_REPO="${HOME_ROOT}/openembedded-core"
+# Command to be executed by patchest-user:
+# - Include patchtest related scripts on PATH
+# - cd into LOCAL_REPO and prepare bitbake environment
+# - Execute patchtest through test-mboxes
+CMD="export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH" &&
+     cd $LOCAL_REPO && source ./oe-init-build-env build > /dev/null &&
+     test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES"
 
-# include patchtest related scripts into PATH
-export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH"
+# Configure git
+git config --global user.email patchtest-user@patchtest.com
+git config --global user.name "patchtest-user"
 
-# configure git
-git config --global user.email guest@patchtest.com
-git config --global user.name "Guest"
-
-# temporal workaround to avoid the "too many open files" error
+# Temporal workaround to avoid the "too many open files" error
 sysctl -w fs.file-max=100000
 
 if [ -d $REPO ]; then
-    # copy the share repo in locally
-    cp -a $REPO $HOME_ROOT
+    # Make a local copy of REPO inside patchtest-user home
+    cp -a $REPO $HOME_USER
+    chown -R $PAT_USER $LOCAL_REPO
 
-    # clean local repo
+    # Clean local repo
     ( cd $LOCAL_REPO; git reset --hard; git clean -fd; )
 
-    ( # python requires UTF-8
+    ( # Python requires UTF-8
       export LC_ALL=en_US.UTF-8;
       export LANG=en_US.UTF-8;
       export LANGUAGE=en_US.UTF-8;
 
-      # prepare the environment
-      cd $LOCAL_REPO;
-      source ./oe-init-build-env build;
-
-      # execute patchtest through test-mboxes
-      test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES; )
+      # Switch user and run CMD as patchtest-user
+      su -m --command "$CMD" $PAT_USER )
 fi
 
-# poweroff the machine
+# Move results dir to MP as root
+mv $RESULTS $MP/results
+
+# Poweroff machine
 init 0
 
 : exit 0
