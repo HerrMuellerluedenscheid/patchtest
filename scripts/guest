@@ -29,6 +29,7 @@ SHAREDIR=''
 GUESTDIR=''
 POST=''
 NOFETCH=''
+NOUPDATE=''
 
 function usage() {
     cat << EOF
@@ -40,13 +41,14 @@ where OPTIONS are
     -g <guest dir> : Guest directory where machine will be located
     -p             : Post results to the patchwork instance
     -n             : Do not fetch, just update repos and launch guest machine
+    -N             : Do not update share repos
 EOF
 >&2
 
     exit 1
 }
 
-while getopts ":s:g:pnh" opt; do
+while getopts ":s:g:pnNh" opt; do
     case $opt in
 	s)
 	    SHAREDIR=$OPTARG
@@ -59,6 +61,9 @@ while getopts ":s:g:pnh" opt; do
 	    ;;
 	n)
 	    NOFETCH='x'
+	    ;;
+	N)
+	    NOUPDATE='x'
 	    ;;
 	h)
 	    usage
@@ -97,7 +102,9 @@ OECORE=$SHAREDIR/openembedded-core
 BB=$OECORE/bitbake
 
 # update share folder
-create-share-folder -s $SHAREDIR
+if [ -z "$NOUPDATE" ]; then
+    create-share-folder -s $SHAREDIR
+fi
 
 test_network || { echo "$(date): No network connection, quitting"; exit 1; }
 
