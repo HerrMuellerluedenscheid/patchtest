@@ -36,7 +36,7 @@ LOCAL_REPO="${HOME_USER}/openembedded-core"
 # - cd into LOCAL_REPO and prepare bitbake environment
 # - Execute patchtest through test-mboxes
 CMD="export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH" &&
-     cd $LOCAL_REPO && source ./oe-init-build-env build > /dev/null &&
+     cd $LOCAL_REPO && rm -rf build && source ./oe-init-build-env build > /dev/null &&
      test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES"
 
 # Configure git

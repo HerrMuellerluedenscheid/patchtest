@@ -108,9 +108,6 @@ fi
 
 test_network || { echo "$(date): No network connection, quitting"; exit 1; }
 
-# remove build folder
-test -d $OECORE/build && rm -rf $OECORE/build
-
 if [ -z "$NOFETCH" ]; then
     # Get latest mboxes from the PW instance
     fetch-mboxes -r $OECORE -m $SHAREDIR/tmp/mboxes
