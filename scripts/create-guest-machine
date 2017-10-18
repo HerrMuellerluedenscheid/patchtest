@@ -157,5 +157,9 @@ BBLAYERS += "$PATCHTEST/meta-patchtest"
 $PTEMARK
 EOF
 
-# build image
-bitbake core-image-patchtest
+cat <<EOF
+Enviroment prepared. Include your own local settings and manually create the image with
+
+    $bitbake core-image-patchtest
+
+EOF
