@@ -1,6 +1,9 @@
 This README file contains information on the contents of the
 patchtest layer.
 
+NOTE: this layer has been fully tested with pyro releases, thus other branches (specially master)
+may have issues.
+
 Please see the corresponding sections below for details.
 
 
