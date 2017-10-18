@@ -121,9 +121,6 @@ GUESTDIR=$(readlink -e $GUESTDIR)
 
 
 
-cd $POKY
-. oe-init-build-env
-
 MACHINE="qemux86-64"
 
 # remove previous patchtest config appends, if exist
@@ -158,8 +155,13 @@ $PTEMARK
 EOF
 
 cat <<EOF
-Enviroment prepared. Include your own local settings and manually create the image with
+Guest directory prepare for building core-image-patchtest.
 
-    $bitbake core-image-patchtest
+Following steps:
+
+    $ cd $POKY
+    $ . oe-init-build-env
+    $ vi conf/auto.cong # Include your own local settings and manually create the image with
+    $ bitbake core-image-patchtest
 
 EOF
