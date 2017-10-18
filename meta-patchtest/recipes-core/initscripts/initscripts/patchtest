@@ -18,30 +18,32 @@ test "$VERBOSE" != no && echo "Executing patchtest..."
 PAT_USER="patchtest-user"
 HOME_USER="$(cut -f6 /etc/passwd -d':' | grep $PAT_USER)"
 
-# Mount point
+# MP is the share directory between host and guest
 MP="$HOME_USER/patchtest"
 test ! -d "$MP" && mkdir "$MP"
+
 mount -t 9p -o trans=virtio test_mount "$MP" -oversion=9p2000.L,posixacl,cache=loose
 
+# Define directory pathnames base on MP
 MBOXES="$MP/mboxes"
 RESULTS="$HOME_USER/results"
 PW="$MP/patchwork"
 PT="$MP/patchtest"
 REPO="$MP/openembedded-core"
 SUITESTART="$MP/patchtest-oe/tests"
+
+# LOCAL_REPO is where patchtest will do its job which is outside MP
 LOCAL_REPO="${HOME_USER}/openembedded-core"
 
 # Command to be executed by patchest-user:
 # - Include patchtest related scripts on PATH
 # - cd into LOCAL_REPO and prepare bitbake environment
 # - Execute patchtest through test-mboxes
-CMD="export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH" &&
-     cd $LOCAL_REPO && rm -rf build && source ./oe-init-build-env build > /dev/null &&
-     test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOXES"
-
-# Configure git
-git config --global user.email patchtest-user@patchtest.com
-git config --global user.name "patchtest-user"
+CMD="export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH" && \
+     cd $LOCAL_REPO && \
+     TMPBUILD=`mktemp -d -p $HOME_USER` && \
+     source ./oe-init-build-env $TMPBUILD && \
+     test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS"
 
 # Temporal workaround to avoid the "too many open files" error
 sysctl -w fs.file-max=100000
@@ -59,14 +61,25 @@ if [ -d $REPO ]; then
       export LANG=en_US.UTF-8;
       export LANGUAGE=en_US.UTF-8;
 
-      # Switch user and run CMD as patchtest-user
-      su -m --command "$CMD" $PAT_USER )
+      # configure git, required for patchtest
+      su -m --command "git config --global user.email patchtest-user@patchtest.com"
+      su -m --command "git config --global user.name  patchtest-user"
+
+      # lets test each mbox individually (and in its own build directory) in order to avoid contamination issues
+      for mbox in $MBOXES/*.mbox; do
+	  MBOXCMD="$CMD $mbox"
+
+	  # Switch user and run patchttest as patchtest-user
+	  su -m --command "$MBOXCMD" $PAT_USER
+      done
+    )
 fi
 
 # Move results dir to MP as root
 mv $RESULTS $MP/results
 
 # Poweroff machine
+
 init 0
 
 : exit 0
