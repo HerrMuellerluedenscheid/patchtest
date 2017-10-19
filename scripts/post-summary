@@ -75,11 +75,11 @@ for file in $resultsdir/*.json; do
 
     # Create the final summary
     if [ "$(cat ${file} | any-fail)" == "yes" ]; then
-	cat ${file} | grep'{' | create-summary --outfile $summary --fail
+	grep '^{' ${file} | create-summary --outfile $summary --fail
 	result=$failure
     else
 	# produce the summary to be post to patchwork
-	cat ${file} | grep'{' | create-summary --outfile $summary
+	grep '^{' ${file} | create-summary --outfile $summary
 	result=$success
     fi
 
