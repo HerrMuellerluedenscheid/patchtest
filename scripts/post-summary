@@ -74,7 +74,7 @@ for file in $resultsdir/*.json; do
     summary="${file}.summary"
 
     # Create the final summary
-    if [ "$(cat ${file} | any-fail)" == "yes" ]; then
+    if [ "$(grep '^{' ${file} | any-fail)" == "yes" ]; then
 	grep '^{' ${file} | create-summary --outfile $summary --fail
 	result=$failure
     else
