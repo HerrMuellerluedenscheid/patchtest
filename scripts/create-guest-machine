@@ -127,9 +127,10 @@ MACHINE="qemux86-64"
 # remove previous patchtest config appends, if exist
 PTSMARK='#PATCHTEST START'
 PTEMARK='#PATCHTEST END'
-sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/local.conf
+[ -f "$POKY/build/conf/auto.conf" ] && sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/auto.conf
 sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
 
+# write patchtest config snippets
 cat >> $POKY/build/conf/auto.conf << EOF
 $PTSMARK
 MACHINE = "$MACHINE"
