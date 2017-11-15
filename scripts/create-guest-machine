@@ -163,7 +163,7 @@ Following steps:
 
     $ cd $POKY
     $ . oe-init-build-env
-    $ vi conf/auto.cong # Include your own local settings and manually create the image with
+    $ vi conf/auto.conf # Include your own local settings and manually create the image with
     $ bitbake core-image-patchtest
 
 EOF
