@@ -23,7 +23,8 @@ function patchtest_cmd() {
 export PATH="$PW/git-pw/:$PT:$PT/scripts:$PATH" &&
 cd $LOCAL_REPO &&
 source ./oe-init-build-env $TMPBUILD &&
-test-mboxes -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOX
+BRANCH=$(get-target-branch $MBOX | awk '{print $NF}') &&
+test-mboxes -a $BRANCH -r $LOCAL_REPO -s $SUITESTART -o $RESULTS $MBOX
 EOF
 }
 

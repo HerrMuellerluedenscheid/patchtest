@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+# Get target branch from the corresponding mbox
+#
+# NOTE: this script was based on patches coming to the openembedded-core
+# where target branch is defined inside brackets as subject prefix
+# i.e. [master], [rocko], etc.
+#
+# Copyright (C) 2016 Intel Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+import mailbox
+import argparse
+import re
+import git
+import sys
+
+re_prefix = re.compile("(\[.*\])", re.DOTALL)
+
+def get_branch(filepath_repo, filepath_mbox, default_branch):
+    branch = None
+
+    tags = set([str(tag).split('-')[0] for tag in git.Repo(filepath_repo).tags])
+
+    subject = ' '.join(mailbox.mbox(filepath_mbox)[0]['subject'].splitlines())
+    mprefix = re_prefix.search(subject)
+
+    if mprefix:
+        prefix = mprefix.group(1)
+        tokens = [token.strip() for token in prefix.strip('[]').split(',')]
+        for token in tokens:
+            # there are cases where user specify the default branch (master)
+            if token == default_branch:
+                branch = default_branch
+                break
+            else:
+               if token in tags:
+                   branch = token
+                   break
+        else:
+            branch = default_branch
+    else:
+        branch = default_branch
+
+    return (subject, branch)
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('repo', metavar='REPO', help='Main repository')
+    parser.add_argument('mbox', metavar='MBOX', help='mbox filename')
+    parser.add_argument('--default-branch', metavar='DEFAULT_BRANCH', default='master', help='Use this branch if no one is found')
+    parser.add_argument('--separator', '-s', metavar='SEPARATOR', default=' ', help='Char separator for output data')
+    args = parser.parse_args()
+
+    subject, branch = args.mbox, args.default_branch
+    ret = 0
+    try:
+        subject, branch = get_branch(args.repo, args.mbox, args.default_branch)
+    except Exception:
+        ret = 1
+    print("%s" % args.separator.join((args.mbox, subject, branch)))
+    sys.exit(ret)
+
