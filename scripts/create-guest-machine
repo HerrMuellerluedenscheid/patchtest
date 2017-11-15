@@ -115,11 +115,9 @@ GUESTDIR=$(readlink -e $GUESTDIR)
 
 
 # clone just in case folders does not contain .git folders
-[ ! -d "$PATCHTEST/.git" ] && { clone git://git.yoctoproject.org/patchtest $PATCHTEST; }
-[ ! -d "$METAOE/.git" ]    && { clone git://git.openembedded.org/meta-openembedded $METAOE $YPBRANCH; }
-[ ! -d "$POKY/.git" ]      && { clone git://git.yoctoproject.org/poky $POKY $YPBRANCH; }
-
-
+clone git://git.yoctoproject.org/patchtest $PATCHTEST
+clone git://git.openembedded.org/meta-openembedded $METAOE $YPBRANCH
+clone git://git.yoctoproject.org/poky $POKY $YPBRANCH
 
 MACHINE="qemux86-64"
 
