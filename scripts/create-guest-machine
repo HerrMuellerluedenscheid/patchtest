@@ -88,10 +88,13 @@ function clone() {
     local BRANCH=$3
     if [ ! -d $REPODIR ]; then
 	git clone $REPOREMOTE $REPODIR
-    else
-	( cd $REPODIR;git fetch origin )
     fi
-    [ -n "$BRANCH" ] && { cd $REPODIR; git checkout $BRANCH; }
+
+    if [ -n "$BRANCH" ]; then
+	( cd $REPODIR; git fetch; git checkout $BRANCH; )
+    else
+	( cd $REPODIR; git pull; )
+    fi
 }
 
 # main
