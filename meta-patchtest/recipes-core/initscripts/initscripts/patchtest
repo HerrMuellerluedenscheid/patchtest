@@ -35,7 +35,7 @@ PAT_USER="patchtest"
 HOME_USER="$(cut -f6 /etc/passwd -d':' | grep $PAT_USER)"
 
 # MP is the share directory between host and guest
-MP="$HOME_USER/patchtest"
+MP="$HOME_USER/share"
 test ! -d "$MP" && mkdir "$MP"
 
 mount -t 9p -o trans=virtio test_mount "$MP" -oversion=9p2000.L,posixacl,cache=loose
