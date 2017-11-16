@@ -124,11 +124,21 @@ clone git://git.yoctoproject.org/poky $POKY $YPBRANCH
 
 MACHINE="qemux86-64"
 
+# create the build folder (and conf files) so we can include the patchtest
+# configs
+( cd $POKY; . oe-init-build-env >/dev/null; )
+
 # remove previous patchtest config appends, if exist
 PTSMARK='#PATCHTEST START'
 PTEMARK='#PATCHTEST END'
-[ -f "$POKY/build/conf/auto.conf" ] && sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/auto.conf
-sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
+
+if [ -f "$POKY/build/conf/auto.conf" ]; then
+    sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/auto.conf
+fi
+
+if [ -f "$POKY/build/conf/bblayers.conf" ]; then
+    sed -i -e "/$PTSMARK/,/$PTEMARK/d" $POKY/build/conf/bblayers.conf
+fi
 
 # write patchtest config snippets
 cat >> $POKY/build/conf/auto.conf << EOF
