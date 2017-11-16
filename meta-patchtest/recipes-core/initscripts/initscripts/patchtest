@@ -77,7 +77,6 @@ if [ -d $REPO ]; then
 	  TMPBUILD=$(su -m --command "mktemp -d" $PAT_USER)
 
 	  MBOXCMD=$(patchtest_cmd $TMPBUILD $MBOX)
-	  su -m --command "echo -e Running \n\t'$MBOXCMD'" $PAT_USER
 	  su -m --command "$MBOXCMD" $PAT_USER
 
 	  # to be safe, remove temporal build folder
