@@ -30,8 +30,8 @@ EOF
 
 test "$VERBOSE" != no && echo "Executing patchtest..."
 
-# Set patchtest-user home path
-PAT_USER="patchtest-user"
+# Set patchtest home path
+PAT_USER="patchtest"
 HOME_USER="$(cut -f6 /etc/passwd -d':' | grep $PAT_USER)"
 
 # MP is the share directory between host and guest
@@ -55,7 +55,7 @@ LOCAL_REPO="${HOME_USER}/openembedded-core"
 sysctl -w fs.file-max=100000
 
 if [ -d $REPO ]; then
-    # Make a local copy of REPO inside patchtest-user home
+    # Make a local copy of REPO inside patchtest home
     cp -a $REPO $HOME_USER
     chown -R $PAT_USER $LOCAL_REPO
 
@@ -68,8 +68,8 @@ if [ -d $REPO ]; then
       export LANGUAGE=en_US.UTF-8;
 
       # configure git, required for patchtest
-      su -m --command "git config --global user.email patchtest-user@patchtest.com"
-      su -m --command "git config --global user.name  patchtest-user"
+      su -m --command "git config --global user.email patchtest@patchtest.com"
+      su -m --command "git config --global user.name  patchtest"
 
       # lets test each mbox individually (and in its own build directory) in order to avoid contamination issues
       for MBOX in $MBOXES/*.mbox; do
