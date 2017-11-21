@@ -30,7 +30,7 @@ TMPBUILD="\$(mktemp -d)"
 BRANCH="\$(get-target-branch \$REPO \$MBOX | awk '{print \$NF}')"
 cd \$REPO
 source ./oe-init-build-env \$TMPBUILD
-test-mboxes -r \$REPO -s \$SUITESTART -m \$MBOX -o \$RESULTS -- -b \$BRANCH
+test-mboxes -r \$REPO -s \$SUITESTART -m \$MBOX -o \$RESULTS -- --base-branch \$BRANCH
 rm -rf \$TMPBUILD
  }
 EOF
