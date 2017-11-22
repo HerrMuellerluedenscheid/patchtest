@@ -32,7 +32,11 @@ re_prefix = re.compile("(\[.*\])", re.DOTALL)
 def get_branch(filepath_repo, filepath_mbox, default_branch):
     branch = None
 
-    tags = set([str(tag).split('-')[0] for tag in git.Repo(filepath_repo).tags])
+    # get all remotes branches
+    gitbranches = git.Git(filepath_repo).branch('-a').splitlines()
+
+    # from gitbranches, just get the names
+    branches = [b.split('/')[-1] for b in gitbranches]
 
     subject = ' '.join(mailbox.mbox(filepath_mbox)[0]['subject'].splitlines())
     mprefix = re_prefix.search(subject)
@@ -46,7 +50,7 @@ def get_branch(filepath_repo, filepath_mbox, default_branch):
                 branch = default_branch
                 break
             else:
-               if token in tags:
+               if token in branches:
                    branch = token
                    break
         else:
@@ -65,12 +69,6 @@ if __name__ == '__main__':
     parser.add_argument('--separator', '-s', metavar='SEPARATOR', default=' ', help='Char separator for output data')
     args = parser.parse_args()
 
-    subject, branch = args.mbox, args.default_branch
-    ret = 0
-    try:
-        subject, branch = get_branch(args.repo, args.mbox, args.default_branch)
-    except Exception:
-        ret = 1
+    subject, branch = get_branch(args.repo, args.mbox, args.default_branch)
     print("%s" % args.separator.join((args.mbox, subject, branch)))
-    sys.exit(ret)
 
