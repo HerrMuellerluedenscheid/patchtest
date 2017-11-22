@@ -29,7 +29,7 @@ mboxpath=''
 startdir=''
 assemblebranch=''
 startpoint='HEAD'
-outputdir=''
+outputdir='.'
 mergeall=''
 
 function usage() {
