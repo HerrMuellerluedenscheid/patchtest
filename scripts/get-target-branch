@@ -43,7 +43,7 @@ def get_branch(filepath_repo, filepath_mbox, default_branch):
 
     if mprefix:
         prefix = mprefix.group(1)
-        tokens = [token.strip() for token in prefix.strip('[]').split(',')]
+        tokens = [token.strip().lower() for token in prefix.strip('[]').split(',')]
         for token in tokens:
             # there are cases where user specify the default branch (master)
             if token == default_branch:
