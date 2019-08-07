@@ -71,7 +71,7 @@ class Repo(object):
         # Check if patch can be merged using git-am
         self._patchcanbemerged = True
         try:
-            self._exec({'cmd': ['git', 'am'], 'input': self._patch.contents})
+            self._exec({'cmd': ['git', 'am', '--keep-cr'], 'input': self._patch.contents})
         except utils.CmdException as ce:
             self._exec({'cmd': ['git', 'am', '--abort']})
             self._patchcanbemerged = False
@@ -174,7 +174,7 @@ class Repo(object):
 
     def merge(self):
         if self._patchcanbemerged:
-            self._exec({'cmd': ['git', 'am'],
+            self._exec({'cmd': ['git', 'am', '--keep-cr'],
                         'input': self._patch.contents,
                         'updateenv': {'PTRESOURCE':self._patch.path}})
             self._patchmerged = True

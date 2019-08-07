@@ -116,13 +116,13 @@ function testpatch() {
 	    # try patch merge
 	    if git apply --check $patch 2> /dev/null; then
 		if [ -n "$mergeall" ]; then
-		    git am --quiet $patch 2>/dev/null && gitnotes
+		    git am --quiet --keep-cr $patch 2>/dev/null && gitnotes
 		    echo -e "\tPatch merged into '${assemblebranch}' including all test results"
 		else
-		    if [ "$(echo "$PTRESULTS" | any-fail)" == "yes"]; then
+		    if [ "$(echo "$PTRESULTS" | any-fail)" == "yes" ]; then
 			echo -e "\tPatch has test failures, skipping"
 		    else
-			git am --quiet $patch 2>/dev/null && gitnotes
+			git am --quiet --keep-cr $patch 2>/dev/null && gitnotes
 			echo -e "\tPatch merged into '${assemblebranch}' with no test failures"
 		    fi
 		fi

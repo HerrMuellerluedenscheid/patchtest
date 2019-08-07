@@ -47,7 +47,7 @@ class Patch(object):
         if self._forcereload or (not self._contents):
             logger.debug('Reading %s contents' % self._path)
             try:
-                with open(self._path) as _f:
+                with open(self._path, newline='') as _f:
                     self._contents = _f.read()
             except IOError:
                 logger.warn("Reading the mbox %s failed" % self.resource)
