@@ -21,22 +21,25 @@ import sys
 import fileinput
 import json
 
+
 def any_fail(jsonlines):
     for jsonline in jsonlines:
         result = json.loads(jsonline)
-        if result['status'] == 'FAIL':
-           break
+        if result["status"] == "FAIL":
+            break
     else:
         # all results either pass or skip
         return "no"
     return "yes"
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     ret = 1
     try:
-        print(any_fail(fileinput.input('-')))
+        print(any_fail(fileinput.input("-")))
         ret = 0
     except:
         import traceback
+
         traceback.print_exc(5)
     sys.exit(ret)

@@ -6,7 +6,7 @@
 . <<host, Host execution>>
 . <<guest, Guest execution>>
 . <<pw, Patchwork Git configuration>>
-. <<scenarios, Secundary scripts and common scenarios>>
+. <<scenarios, Secondary scripts and common scenarios>>
   .. <<fetching-series-from-patchwork, Fetching series from patchwork>>
   .. <<testing-series, Testing series>>
   .. <<fetching-testing-from-patchwork, Fetching and testing series from patchwork>>
@@ -17,7 +17,7 @@
 
 **Patchtest** is a test framework for community patches based on the standard
 https://docs.python.org/2/library/unittest.html[unittest] python module.
-As input, it needs tree elements to work propertly: a **patch** in mbox format
+As input, it needs tree elements to work properly: a **patch** in mbox format
 (either created with `git format-patch` or fetched from 'patchwork'),
 a **test suite** and a **target repository**. In this document we use 'patchtest-oe',
 a test suite containing checks targeted for the
@@ -35,6 +35,12 @@ One last thing, the terms *patch*, *mbox* and *series* are used in several parts
 but all mean the same: a code change (produced by diff or git) embedded in a mbox. Patchwork has
 the 'series' abstraction (collection of patchtest) but at the end the series is fetched as a single
 mbox and git-mboxes (produced by `git-format-patch`) are mboxes containing just a single patch.
+
+[[prerequisites]]
+=== Prerequisites
+
+Make sure that your `$PYTHONPATH` contains bitbake's `lib/bb` path. This is required
+for patchtest to find the `tinfoil` module.
 
 [[host]]
 === Host execution
@@ -56,6 +62,7 @@ git clone git://git.yoctoproject.org/patchtest-oe
 ----
 
 [[requirements]]
+
 * Using 'pip', install the python requirements for both projects
 [NOTE]
 You can use your distribution package manager instead of 'pip' to install
@@ -67,7 +74,7 @@ cd <path to patchtest>; pip install -r requirements.txt
 cd <path to patchtest-oe>; pip install -r requirements.txt
 ----
 
-* Test a patch (patch can be those produdced by git-format-patch from the OE-core repository
+* Test a patch (patch can be those produced by git-format-patch from the OE-core repository
 or an standard mbox fetched from patchwork)
 
 [source,shell]

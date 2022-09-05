@@ -32,11 +32,12 @@ import collections
 import tempfile
 import logging
 
-logger=logging.getLogger('patchtest')
-info=logger.info
+logger = logging.getLogger("patchtest")
+info = logger.info
 
 # Data store commonly used to share values between pre and post-merge tests
 PatchTestDataStore = collections.defaultdict(str)
+
 
 class PatchTestStdIn(object):
     """Gather patch data from standard input"""
@@ -44,10 +45,11 @@ class PatchTestStdIn(object):
     @classmethod
     def namespace_stdin(cls, inputlines):
         (_, patch) = tempfile.mkstemp()
-        with open(patch,'w') as patchfd:
+        with open(patch, "w") as patchfd:
             for line in inputlines:
                 patchfd.write(line)
         return patch
+
 
 class PatchTestArgs(object):
     """Abstract the patchtest argument parser"""
@@ -61,45 +63,65 @@ class PatchTestArgs(object):
     def get_parser(cls):
         parser = argparse.ArgumentParser()
 
-        parser.add_argument('patch', metavar='PATCH',
-                            help='The patch to be tested')
+        parser.add_argument("patch", metavar="PATCH", help="The patch to be tested")
 
-        parser.add_argument('repodir', metavar='REPO',
-                            help="Name of the repository where patch is merged")
+        parser.add_argument(
+            "repodir",
+            metavar="REPO",
+            help="Name of the repository where patch is merged",
+        )
 
-        parser.add_argument('startdir', metavar='TESTDIR',
-                            help="Directory where test cases are located")
+        parser.add_argument(
+            "startdir", metavar="TESTDIR", help="Directory where test cases are located"
+        )
 
-        parser.add_argument('--top-level-directory', '-t',
-                            dest='topdir',
-                            default=None,
-                            help="Top level directory of project (defaults to start directory)")
+        parser.add_argument(
+            "--top-level-directory",
+            "-t",
+            dest="topdir",
+            default=None,
+            help="Top level directory of project (defaults to start directory)",
+        )
 
-        parser.add_argument('--pattern', '-p',
-                            dest='pattern',
-                            default='test*.py',
-                            help="Pattern to match test files")
+        parser.add_argument(
+            "--pattern",
+            "-p",
+            dest="pattern",
+            default="test*.py",
+            help="Pattern to match test files",
+        )
 
-        parser.add_argument('--base-branch', '-b',
-                            dest='basebranch',
-                            help="Branch name used by patchtest to branch from. By default, it uses the current one.")
+        parser.add_argument(
+            "--base-branch",
+            "-b",
+            dest="basebranch",
+            help="Branch name used by patchtest to branch from. By default, it uses the current one.",
+        )
 
-        parser.add_argument('--base-commit', '-c',
-                            dest='basecommit',
-                            help="Commit ID used by patchtest to branch from. By default, it uses HEAD.")
+        parser.add_argument(
+            "--base-commit",
+            "-c",
+            dest="basecommit",
+            help="Commit ID used by patchtest to branch from. By default, it uses HEAD.",
+        )
 
-        parser.add_argument('--debug', '-d',
-                            action='store_true',
-                            help='Enable debug output')
+        parser.add_argument(
+            "--debug", "-d", action="store_true", help="Enable debug output"
+        )
 
-        parser.add_argument('--json', '-j',
-                            action='store_true',
-                            dest='json',
-                            help='Print results in JSON format')
+        parser.add_argument(
+            "--json",
+            "-j",
+            action="store_true",
+            dest="json",
+            help="Print results in JSON format",
+        )
 
         return parser
 
+
 # Class used as a namespace to share data from patchtest to the test suites
 class PatchTestInput(PatchTestArgs, PatchTestStdIn):
-    """ PatchTest wrapper input class"""
+    """PatchTest wrapper input class"""
+
     pass

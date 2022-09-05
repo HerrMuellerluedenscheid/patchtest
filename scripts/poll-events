@@ -24,16 +24,17 @@ import argparse
 import json
 import subprocess
 
+
 def pollseries(repodir, pwproject, since):
     listseriesrev = list()
     events = str()
-    cmd = 'cd %s;git pw poll-events --name series-new-revision' % repodir
+    cmd = "cd %s;git pw poll-events --name series-new-revision" % repodir
 
     if since:
         cmd += " --since %s" % since
         events = subprocess.check_output(cmd, shell=True, universal_newlines=True)
     else:
-        timestamp = '.git-pw.%s.poll.timestamp' % pwproject
+        timestamp = ".git-pw.%s.poll.timestamp" % pwproject
         if os.path.exists(os.path.join(repodir, timestamp)):
             events = subprocess.check_output(cmd, shell=True, universal_newlines=True)
         else:
@@ -43,29 +44,29 @@ def pollseries(repodir, pwproject, since):
 
     for event in events.splitlines():
         series = json.loads(event)
-        listseriesrev.append((series['series'], series['parameters']['revision']))
+        listseriesrev.append((series["series"], series["parameters"]["revision"]))
 
-    return ' '.join(['.'.join([str(s),str(r)]) for s,r in listseriesrev])
+    return " ".join([".".join([str(s), str(r)]) for s, r in listseriesrev])
 
-if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description="""
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        description="""
 Poll series and return these as a list of series.revision. If since is not present,
 it will look into the .git-pw and take possible timestamp from it. If the latter
-file is not present, *all* events are polled and *no* series are printed.""")
+file is not present, *all* events are polled and *no* series are printed."""
+    )
 
-    parser.add_argument('repodir',
-                        help='Repository where polling is done')
+    parser.add_argument("repodir", help="Repository where polling is done")
 
-    parser.add_argument('since',
-                        nargs='?',
-                        default=None,
-                        help='Poll events since the given timestamp')
+    parser.add_argument(
+        "since", nargs="?", default=None, help="Poll events since the given timestamp"
+    )
 
-    parser.add_argument('--project',
-                        dest='project',
-                        default='oe-core',
-                        help='Patchwork\'s project name')
+    parser.add_argument(
+        "--project", dest="project", default="oe-core", help="Patchwork's project name"
+    )
 
     args = parser.parse_args()
 
@@ -74,10 +75,10 @@ file is not present, *all* events are polled and *no* series are printed.""")
         print(pollseries(args.repodir, args.project, args.since))
         ret = 0
     except subprocess.CalledProcessError as cpe:
-        print('make sure you have patchwork git-pw installed')
+        print("make sure you have patchwork git-pw installed")
     except:
         import traceback
+
         traceback.print_exc(5)
 
     sys.exit(ret)
-

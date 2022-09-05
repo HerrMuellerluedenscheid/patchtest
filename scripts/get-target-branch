@@ -29,30 +29,31 @@ import sys
 
 re_prefix = re.compile("(\[.*\])", re.DOTALL)
 
+
 def get_branch(filepath_repo, filepath_mbox, default_branch):
     branch = None
 
     # get all remotes branches
-    gitbranches = git.Git(filepath_repo).branch('-a').splitlines()
+    gitbranches = git.Git(filepath_repo).branch("-a").splitlines()
 
     # from gitbranches, just get the names
-    branches = [b.split('/')[-1] for b in gitbranches]
+    branches = [b.split("/")[-1] for b in gitbranches]
 
-    subject = ' '.join(mailbox.mbox(filepath_mbox)[0]['subject'].splitlines())
+    subject = " ".join(mailbox.mbox(filepath_mbox)[0]["subject"].splitlines())
     mprefix = re_prefix.search(subject)
 
     if mprefix:
         prefix = mprefix.group(1)
-        tokens = [token.strip().lower() for token in prefix.strip('[]').split(',')]
+        tokens = [token.strip().lower() for token in prefix.strip("[]").split(",")]
         for token in tokens:
             # there are cases where user specify the default branch (master)
             if token == default_branch:
                 branch = default_branch
                 break
             else:
-               if token in branches:
-                   branch = token
-                   break
+                if token in branches:
+                    branch = token
+                    break
         else:
             branch = default_branch
     else:
@@ -60,15 +61,26 @@ def get_branch(filepath_repo, filepath_mbox, default_branch):
 
     return (subject, branch)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('repo', metavar='REPO', help='Main repository')
-    parser.add_argument('mbox', metavar='MBOX', help='mbox filename')
-    parser.add_argument('--default-branch', metavar='DEFAULT_BRANCH', default='master', help='Use this branch if no one is found')
-    parser.add_argument('--separator', '-s', metavar='SEPARATOR', default=' ', help='Char separator for output data')
+    parser.add_argument("repo", metavar="REPO", help="Main repository")
+    parser.add_argument("mbox", metavar="MBOX", help="mbox filename")
+    parser.add_argument(
+        "--default-branch",
+        metavar="DEFAULT_BRANCH",
+        default="master",
+        help="Use this branch if no one is found",
+    )
+    parser.add_argument(
+        "--separator",
+        "-s",
+        metavar="SEPARATOR",
+        default=" ",
+        help="Char separator for output data",
+    )
     args = parser.parse_args()
 
     subject, branch = get_branch(args.repo, args.mbox, args.default_branch)
     print("%s" % args.separator.join((args.mbox, subject, branch)))
-

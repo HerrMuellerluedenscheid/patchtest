@@ -25,6 +25,7 @@ import argparse
 import jinja2
 import codecs
 
+
 def summary(stdin, template, outfile, fail, params):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(template)))
     template = env.get_template(os.path.basename(template))
@@ -38,79 +39,92 @@ def summary(stdin, template, outfile, fail, params):
             continue
 
         # check must-keys
-        if 'status' not in test and 'results' not in test:
+        if "status" not in test and "results" not in test:
             continue
 
-        teststatus, testresults  = test['status'], test['results']
+        teststatus, testresults = test["status"], test["results"]
         if fail:
-            if teststatus != 'FAIL':
+            if teststatus != "FAIL":
                 continue
 
         # check results contain the test-id key
-        if 'id' not in testresults:
+        if "id" not in testresults:
             continue
-            
-        testresults['test_name'] = testresults['id'].split('.')[-1]
-        testresults['status'] = teststatus
+
+        testresults["test_name"] = testresults["id"].split(".")[-1]
+        testresults["status"] = teststatus
         results.append(testresults)
 
-    renderparams = {'results': results}
+    renderparams = {"results": results}
     renderparams.update(params)
 
     render = template.render(renderparams)
 
     if outfile:
-        with codecs.open(outfile, 'w', encoding='utf-8', errors='ignore') as fd:
+        with codecs.open(outfile, "w", encoding="utf-8", errors="ignore") as fd:
             fd.write(render)
     else:
         print(render)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a summary")
 
-    parser.add_argument('--outfile',
-                        dest='outfile',
-                        default=None,
-                        help='File where summary will be create. If not defined, it is printed into stdout')
+    parser.add_argument(
+        "--outfile",
+        dest="outfile",
+        default=None,
+        help="File where summary will be create. If not defined, it is printed into stdout",
+    )
 
-    parser.add_argument('--template',
-                        dest='template',
-                        default=os.path.join(os.path.dirname(__file__), 'summary.jinja2'),
-                        help='Template to be used')
+    parser.add_argument(
+        "--template",
+        dest="template",
+        default=os.path.join(os.path.dirname(__file__), "summary.jinja2"),
+        help="Template to be used",
+    )
 
-    parser.add_argument('--project',
-                        dest='project',
-                        default='OpenEmbedded Core',
-                        help='Name of the project being monitored')
+    parser.add_argument(
+        "--project",
+        dest="project",
+        default="OpenEmbedded Core",
+        help="Name of the project being monitored",
+    )
 
-    parser.add_argument('--mailing-list',
-                        dest='mailinglist',
-                        default='openembedded-core@lists.openembedded.org',
-                        help='Mailing list of the project being monitored')
+    parser.add_argument(
+        "--mailing-list",
+        dest="mailinglist",
+        default="openembedded-core@lists.openembedded.org",
+        help="Mailing list of the project being monitored",
+    )
 
-    parser.add_argument('--fail',
-                        action='store_true',
-                        dest='fail',
-                        help='Include failures only')
+    parser.add_argument(
+        "--fail", action="store_true", dest="fail", help="Include failures only"
+    )
 
-    parser.add_argument('--only-results',
-                        action='store_true',
-                        dest='only_results',
-                        help='Print just the results')
+    parser.add_argument(
+        "--only-results",
+        action="store_true",
+        dest="only_results",
+        help="Print just the results",
+    )
 
     args = parser.parse_args()
 
     ret = 1
     try:
-        stdin = fileinput.input('-')
-        opt = dict([
-            ('project', args.project),
-            ('mailinglist', args.mailinglist),
-            ('fail', args.fail),
-            ('only_results', args.only_results),
-        ])
+        stdin = fileinput.input("-")
+        opt = dict(
+            [
+                ("project", args.project),
+                ("mailinglist", args.mailinglist),
+                ("fail", args.fail),
+                ("only_results", args.only_results),
+            ]
+        )
         ret = summary(stdin, args.template, args.outfile, args.fail, opt)
     except:
         import traceback
+
         traceback.print_exc(5)
     sys.exit(ret)

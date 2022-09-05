@@ -22,17 +22,20 @@
 import logging
 import utils
 
-logger = logging.getLogger('patchtest')
+logger = logging.getLogger("patchtest")
+
 
 class Patch(object):
-    MERGE_STATUS_INVALID = 'INVALID'
-    MERGE_STATUS_NOT_MERGED = 'NOTMERGED'
-    MERGE_STATUS_MERGED_SUCCESSFULL = 'PASS'
-    MERGE_STATUS_MERGED_FAIL = 'FAIL'
-    MERGE_STATUS = (MERGE_STATUS_INVALID,
-                    MERGE_STATUS_NOT_MERGED,
-                    MERGE_STATUS_MERGED_SUCCESSFULL,
-                    MERGE_STATUS_MERGED_FAIL)
+    MERGE_STATUS_INVALID = "INVALID"
+    MERGE_STATUS_NOT_MERGED = "NOTMERGED"
+    MERGE_STATUS_MERGED_SUCCESSFULL = "PASS"
+    MERGE_STATUS_MERGED_FAIL = "FAIL"
+    MERGE_STATUS = (
+        MERGE_STATUS_INVALID,
+        MERGE_STATUS_NOT_MERGED,
+        MERGE_STATUS_MERGED_SUCCESSFULL,
+        MERGE_STATUS_MERGED_FAIL,
+    )
 
     def __init__(self, path, forcereload=False):
         self._path = path
@@ -45,9 +48,9 @@ class Patch(object):
     @property
     def contents(self):
         if self._forcereload or (not self._contents):
-            logger.debug('Reading %s contents' % self._path)
+            logger.debug("Reading %s contents" % self._path)
             try:
-                with open(self._path, newline='') as _f:
+                with open(self._path, newline="") as _f:
                     self._contents = _f.read()
             except IOError:
                 logger.warn("Reading the mbox %s failed" % self.resource)
@@ -70,4 +73,3 @@ class Patch(object):
         return self._merge_status
 
     merge_status = property(getmergestatus, setmergestatus)
-
